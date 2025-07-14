@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import React, { useState, FormEvent } from "react";
 
@@ -17,7 +18,8 @@ export default function Login() {
       const res = await fetch(`${API_URL}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ usuario, password }),
+        // Si backend espera { email, password }
+        body: JSON.stringify({ email: usuario, password }),
       });
       const data = await res.json();
 
@@ -44,15 +46,12 @@ export default function Login() {
           <img
             src="/logo.png"
             alt="PAMEQ"
-            className="w-20 mb-2 drop-shadow-lg"
+            className="w-30 mb-2 drop-shadow-lg"
             style={{ filter: "grayscale(100%) brightness(1.1)" }}
           />
           <h2 className="text-2xl font-bold text-neutral-900 tracking-wide">
-            ¡Bienvenido a PAMEQ!
+            ¡Bienvenido!
           </h2>
-          <h3 className="text-lg font-semibold mt-1 mb-2 text-emerald-700 tracking-wide">
-            Ingreso a la plataforma
-          </h3>
         </div>
         <form onSubmit={handleLogin} className="space-y-4">
           <label className="block font-semibold text-neutral-800 mb-1">
@@ -88,20 +87,17 @@ export default function Login() {
         </form>
         <div className="mt-5 flex flex-col gap-1 text-sm text-center">
           <a
-            href="/recuperar"
+            href="/recover/reset-password"
             className="text-emerald-700 hover:underline hover:text-emerald-900 transition"
           >
             ¿Olvidaste tu contraseña?
           </a>
-          <a
-            href="/registro"
-            className="text-blue-700 hover:underline hover:text-blue-900 transition"
-          >
-            ¿No tienes cuenta? Regístrate
-          </a>
         </div>
         <div className="mt-6 text-xs text-gray-400 text-center">
-          <span>© {new Date().getFullYear()} PAMEQ - Plataforma de Mejoramiento en Calidad Hospitalaria</span>
+          <span>
+            © {new Date().getFullYear()} PAMEQ - Plataforma de Mejoramiento en
+            Calidad
+          </span>
         </div>
       </div>
     </div>
