@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import React, { useState, FormEvent } from "react";
+import Link from "next/link";
 
 export default function Login() {
   const [usuario, setUsuario] = useState<string>("");
@@ -35,7 +36,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-neutral-900">
+    <div className="min-h-screen flex items-center justify-center">
       <div className="bg-white p-10 rounded-3xl shadow-2xl w-full max-w-md border border-gray-200">
         {error && (
           <div className="bg-red-100 text-red-700 rounded p-3 mb-4 text-center font-semibold border border-red-200">
@@ -50,7 +51,7 @@ export default function Login() {
             style={{ filter: "grayscale(100%) brightness(1.1)" }}
           />
           <h2 className="text-2xl font-bold text-neutral-900 tracking-wide">
-            ¡Bienvenido!
+            ¡Bienvenido a PAMEQ!
           </h2>
         </div>
         <form onSubmit={handleLogin} className="space-y-4">
@@ -80,18 +81,18 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full mt-2 bg-emerald-700 hover:bg-emerald-800 text-white py-2 rounded-xl font-semibold transition shadow"
+            className="w-full mt-2 bg-[#2C5959] hover:bg-emerald-800 text-white py-2 rounded-xl font-semibold transition shadow"
           >
             {loading ? "Iniciando..." : "Iniciar Sesión"}
           </button>
         </form>
         <div className="mt-5 flex flex-col gap-1 text-sm text-center">
-          <a
+          <Link
             href="/recover/reset-password"
             className="text-emerald-700 hover:underline hover:text-emerald-900 transition"
           >
             ¿Olvidaste tu contraseña?
-          </a>
+          </Link>
         </div>
         <div className="mt-6 text-xs text-gray-400 text-center">
           <span>
