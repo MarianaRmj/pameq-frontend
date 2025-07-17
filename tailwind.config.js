@@ -1,18 +1,14 @@
-// tailwind.config.ts
-import type { Config } from 'tailwindcss';
-
-const config: Config = {
+/** @type {import('tailwindcss').Config} */
+module.exports = {
   content: [
-    "./app/**/*.{js,ts,jsx,tsx}",
-    "./components/**/*.{js,ts,jsx,tsx}",
-    "./pages/**/*.{js,ts,jsx,tsx}",
+    "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
     extend: {
       colors: {
         verdeClaro: "#33A691",
         verdeOscuro: "#2C5959",
-        verdeSuave: "#B8D9C4", // ✅ Este es el importante para la barra
+        verdeSuave: "#B8D9C4",
         marronOscuro: "#593325",
         blancoSuave: "#F2F2F2",
         negro: "#171717",
@@ -27,6 +23,4 @@ const config: Config = {
     },
   },
   plugins: [],
-};
-
-export default config;
+}

@@ -48,7 +48,7 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-neutral-900 px-4 font-nunito">
+    <div className="flex items-center justify-center min-h-screen px-4 font-nunito">
       <div className="bg-white p-10 rounded-3xl shadow-2xl w-full max-w-md border border-gray-200">
 
         {/* Mensajes */}
@@ -110,7 +110,7 @@ export default function ResetPasswordPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full mt-2 bg-emerald-700 hover:bg-emerald-800 text-white py-2 rounded-xl font-semibold transition shadow disabled:opacity-60"
+            className="w-full mt-2 bg-[#2C5959] hover:bg-emerald-800 text-white py-2 rounded-xl font-semibold transition shadow disabled:opacity-60"
           >
             {loading ? "Procesando..." : "Guardar nueva contraseña"}
           </button>
