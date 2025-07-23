@@ -1,40 +1,45 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function EditarInstitucion() {
   const router = useRouter();
   const [formData, setFormData] = useState({
-    nombre_ips: '',
-    nit: '',
-    direccion_principal: '',
-    telefono: '',
-    codigo_habilitacion: '',
-    tipo_institucion: '',
-    nombre_representante: '',
-    nivel_complejidad: '',
-    correo_contacto: '',
-    sitio_web: '',
-    resolucion_habilitacion: '',
+    nombre_ips: "",
+    nit: "",
+    direccion_principal: "",
+    telefono: "",
+    codigo_habilitacion: "",
+    tipo_institucion: "",
+    nombre_representante: "",
+    nivel_complejidad: "",
+    correo_contacto: "",
+    sitio_web: "",
+    resolucion_habilitacion: "",
+    enfoque: "",
+    fecha_inicio_ciclo: "",
+    fecha_fin_ciclo: "",
   });
 
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('http://localhost:3001/institutions/1')
+    fetch("http://localhost:3001/institutions/1")
       .then((res) => res.json())
       .then((data) => {
         setFormData(data);
         setLoading(false);
       })
       .catch(() => {
-        alert('Error cargando la institución');
+        alert("Error cargando la institución");
         setLoading(false);
       });
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
@@ -43,138 +48,144 @@ export default function EditarInstitucion() {
     e.preventDefault();
 
     try {
-      const res = await fetch('http://localhost:3001/institutions/1', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("http://localhost:3001/institutions/1", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
 
-      if (!res.ok) throw new Error('Error al actualizar');
+      if (!res.ok) throw new Error("Error al actualizar");
 
-      alert('✅ Institución actualizada');
-      router.push('/dashboard');
+      alert("✅ Institución actualizada");
+      router.push("/dashboard");
     } catch (err) {
       alert(`❌ ${err}`);
     }
   };
 
-  if (loading) return <div style={{ padding: '2rem', color: '#555' }}>Cargando datos...</div>;
+  if (loading)
+    return (
+      <div className="p-8 text-gray-600 font-nunito">Cargando datos...</div>
+    );
 
   return (
-    <div style={{
-      maxWidth: '960px',
-      margin: '60px auto',
-      padding: '40px',
-      backgroundColor: '#f2f2f2',
-      borderRadius: '12px',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-      fontFamily: 'Nunito, sans-serif'
-    }}>
-      <h2 style={{
-        fontSize: '28px',
-        color: '#2C5959',
-        fontWeight: 700,
-        marginBottom: '30px',
-        textAlign: 'center'
-      }}>
+  <section className="max-w-5xl mx-auto mt-10 px-6 py-10 bg-white rounded-2xl shadow-md font-nunito">
+    <div className="mb-10 text-center">
+      <h2 className="text-3xl font-extrabold text-[#2C5959] mb-2">
         Parametrizar Institución
       </h2>
-
-      <form onSubmit={handleSubmit} style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-        gap: '24px'
-      }}>
-        {[
-          { label: 'Nombre de la IPS', name: 'nombre_ips' },
-          { label: 'NIT', name: 'nit' },
-          { label: 'Dirección Principal', name: 'direccion_principal' },
-          { label: 'Teléfono', name: 'telefono' },
-          { label: 'Código de Habilitación', name: 'codigo_habilitacion' },
-          { label: 'Representante Legal', name: 'nombre_representante' },
-          { label: 'Correo de Contacto', name: 'correo_contacto' },
-        ].map((field) => (
-          <div key={field.name} style={{ display: 'flex', flexDirection: 'column' }}>
-            <label style={{ marginBottom: '6px', fontWeight: 600, color: '#171717' }}>{field.label}</label>
-            <input
-              name={field.name}
-              value={formData[field.name as keyof typeof formData] || ''}
-              onChange={handleChange}
-              required={['nombre_ips', 'nit', 'direccion_principal'].includes(field.name)}
-              style={{
-                padding: '10px 14px',
-                border: '1px solid #ccc',
-                borderRadius: '8px',
-                backgroundColor: '#fff',
-                fontSize: '14px'
-              }}
-            />
-          </div>
-        ))}
-
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <label style={{ marginBottom: '6px', fontWeight: 600, color: '#171717' }}>Tipo de Institución</label>
-          <select
-            name="tipo_institucion"
-            value={formData.tipo_institucion}
-            onChange={handleChange}
-            style={{
-              padding: '10px 14px',
-              border: '1px solid #ccc',
-              borderRadius: '8px',
-              backgroundColor: '#fff',
-              fontSize: '14px'
-            }}
-          >
-            <option value="">Seleccione</option>
-            <option value="Publica">Publica</option>
-            <option value="Privada">Privada</option>
-            <option value="Mixta">Mixta</option>
-          </select>
-        </div>
-
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <label style={{ marginBottom: '6px', fontWeight: 600, color: '#171717' }}>Nivel de Complejidad</label>
-          <select
-            name="nivel_complejidad"
-            value={formData.nivel_complejidad}
-            onChange={handleChange}
-            style={{
-              padding: '10px 14px',
-              border: '1px solid #ccc',
-              borderRadius: '8px',
-              backgroundColor: '#fff',
-              fontSize: '14px'
-            }}
-          >
-            <option value="">Seleccione</option>
-            <option value="Baja">Baja</option>
-            <option value="Media">Media</option>
-            <option value="Alta">Alta</option>
-          </select>
-        </div>
-
-        <div style={{
-          gridColumn: '1 / -1',
-          textAlign: 'right',
-          marginTop: '20px'
-        }}>
-          <button
-            type="submit"
-            style={{
-              backgroundColor: '#2C5959',
-              color: 'white',
-              padding: '12px 24px',
-              border: 'none',
-              borderRadius: '8px',
-              fontWeight: 'bold',
-              cursor: 'pointer'
-            }}
-          >
-            Actualizar
-          </button>
-        </div>
-      </form>
+      <p className="text-sm text-gray-500">
+        Completa o actualiza la información general de tu institución
+      </p>
     </div>
-  );
+
+    <form
+      onSubmit={handleSubmit}
+      className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6"
+    >
+      {[
+        { label: "Nombre de la IPS", name: "nombre_ips" },
+        { label: "NIT", name: "nit" },
+        { label: "Dirección Principal", name: "direccion_principal" },
+        { label: "Teléfono", name: "telefono" },
+        { label: "Código de Habilitación", name: "codigo_habilitacion" },
+        { label: "Representante Legal", name: "nombre_representante" },
+        { label: "Correo de Contacto", name: "correo_contacto" },
+        { label: "Enfoque", name: "enfoque" },
+      ].map((field) => (
+        <div key={field.name}>
+          <label className="block text-sm font-semibold text-gray-800 mb-1">
+            {field.label}
+          </label>
+          <input
+            name={field.name}
+            value={formData[field.name as keyof typeof formData] || ""}
+            onChange={handleChange}
+            required={["nombre_ips", "nit", "direccion_principal"].includes(
+              field.name
+            )}
+            className="w-full rounded-lg border border-gray-300 bg-neutral-100 px-4 py-2 text-sm focus:border-[#2C5959] focus:ring-2 focus:ring-[#2C5959] outline-none transition"
+          />
+        </div>
+      ))}
+
+      {/* Sección de Ciclo */}
+      <div className="md:col-span-2">
+        <div className="bg-[#F9FAFB] border border-gray-200 rounded-lg p-4">
+          <h3 className="text-sm font-bold text-[#2C5959] mb-3">Ciclo</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">
+                Fecha de Inicio
+              </label>
+              <input
+                type="date"
+                name="fecha_inicio_ciclo"
+                value={formData.fecha_inicio_ciclo}
+                onChange={handleChange}
+                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm focus:border-[#2C5959] focus:ring-2 focus:ring-[#2C5959] outline-none transition"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">
+                Fecha de Fin
+              </label>
+              <input
+                type="date"
+                name="fecha_fin_ciclo"
+                value={formData.fecha_fin_ciclo}
+                onChange={handleChange}
+                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm focus:border-[#2C5959] focus:ring-2 focus:ring-[#2C5959] outline-none transition"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Selects */}
+      <div>
+        <label className="block text-sm font-semibold text-gray-800 mb-1">
+          Tipo de Institución
+        </label>
+        <select
+          name="tipo_institucion"
+          value={formData.tipo_institucion}
+          onChange={handleChange}
+          className="w-full rounded-lg border border-gray-300 bg-neutral-100 px-4 py-2 text-sm focus:border-[#2C5959] focus:ring-2 focus:ring-[#2C5959] outline-none transition"
+        >
+          <option value="">Seleccione</option>
+          <option value="Publica">Pública</option>
+          <option value="Privada">Privada</option>
+          <option value="Mixta">Mixta</option>
+        </select>
+      </div>
+
+      <div>
+        <label className="block text-sm font-semibold text-gray-800 mb-1">
+          Nivel de Complejidad
+        </label>
+        <select
+          name="nivel_complejidad"
+          value={formData.nivel_complejidad}
+          onChange={handleChange}
+          className="w-full rounded-lg border border-gray-300 bg-neutral-100 px-4 py-2 text-sm focus:border-[#2C5959] focus:ring-2 focus:ring-[#2C5959] outline-none transition"
+        >
+          <option value="">Seleccione</option>
+          <option value="Baja">Baja</option>
+          <option value="Media">Media</option>
+          <option value="Alta">Alta</option>
+        </select>
+      </div>
+
+      <div className="md:col-span-2 flex justify-end pt-4">
+        <button
+          type="submit"
+          className="bg-[#2C5959] hover:bg-[#1f403f] text-white px-6 py-3 rounded-lg font-semibold text-sm transition"
+        >
+          Actualizar institución
+        </button>
+      </div>
+    </form>
+  </section>
+);
 }

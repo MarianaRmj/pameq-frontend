@@ -26,7 +26,8 @@ export default function ResetPasswordPage() {
     }
 
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+      const API_URL =
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
       const res = await fetch(`${API_URL}/recover/reset-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -34,7 +35,8 @@ export default function ResetPasswordPage() {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Error al cambiar contraseña");
+      if (!res.ok)
+        throw new Error(data.message || "Error al cambiar contraseña");
 
       setSuccess("✅ Contraseña actualizada correctamente. Redirigiendo...");
       setTimeout(() => {
@@ -48,32 +50,31 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen px-4 font-nunito">
-      <div className="bg-white p-10 rounded-3xl shadow-2xl w-full max-w-md border border-gray-200">
-
+    <div className="min-h-screen flex items-center justify-center px-4 bg-white font-nunito">
+      <div className="w-full max-w-md p-8 md:p-10 bg-white rounded-3xl shadow-2xl border border-gray-200">
         {/* Mensajes */}
         {error && (
-          <div className="bg-red-100 text-red-700 rounded p-3 mb-4 text-center font-semibold border border-red-200">
+          <div className="bg-red-100 text-red-700 rounded-lg p-3 mb-4 text-center font-semibold border border-red-300 text-sm">
             {error}
           </div>
         )}
         {success && (
-          <div className="bg-green-100 text-green-700 rounded p-3 mb-4 text-center font-semibold border border-green-200">
+          <div className="bg-green-100 text-green-700 rounded-lg p-3 mb-4 text-center font-semibold border border-green-300 text-sm">
             {success}
           </div>
         )}
 
-        {/* Logo + Encabezado */}
+        {/* Logo + encabezado */}
         <div className="flex flex-col items-center mb-6">
           <Image
             src="/logo.png"
             alt="PAMEQ"
-            width={150}
-            height={150}
-            className="mb-2 drop-shadow-lg"
+            width={120}
+            height={120}
+            className="mb-2 drop-shadow"
             style={{ filter: "grayscale(100%) brightness(1.1)" }}
           />
-          <h2 className="text-xl font-bold text-neutral-900 tracking-wide mt-2">
+          <h2 className="text-2xl font-bold text-[#2C5959] tracking-wide text-center">
             Restablecer contraseña
           </h2>
           <p className="text-sm text-gray-500 text-center mt-1">
@@ -83,34 +84,38 @@ export default function ResetPasswordPage() {
 
         {/* Formulario */}
         <form onSubmit={handleReset} className="space-y-4">
-          <label className="block font-semibold text-neutral-800 mb-1">
-            Nueva contraseña
+          <div>
+            <label className="block font-semibold text-neutral-800 mb-1">
+              Nueva contraseña
+            </label>
             <input
               type="password"
-              className="w-full mt-1 p-2 rounded-xl border border-gray-300 bg-neutral-100 text-neutral-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
+              className="w-full p-2 rounded-xl border border-gray-300 bg-neutral-100 text-neutral-900 focus:outline-none focus:ring-2 focus:ring-[#2C5959] transition"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               required
             />
-          </label>
+          </div>
 
-          <label className="block font-semibold text-neutral-800 mb-1">
-            Confirmar contraseña
+          <div>
+            <label className="block font-semibold text-neutral-800 mb-1">
+              Confirmar contraseña
+            </label>
             <input
               type="password"
-              className="w-full mt-1 p-2 rounded-xl border border-gray-300 bg-neutral-100 text-neutral-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
+              className="w-full p-2 rounded-xl border border-gray-300 bg-neutral-100 text-neutral-900 focus:outline-none focus:ring-2 focus:ring-[#2C5959] transition"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="••••••••"
               required
             />
-          </label>
+          </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full mt-2 bg-[#2C5959] hover:bg-emerald-800 text-white py-2 rounded-xl font-semibold transition shadow disabled:opacity-60"
+            className="w-full mt-2 bg-[#2C5959] hover:bg-[#1f403f] text-white py-2 rounded-xl font-semibold transition shadow disabled:opacity-60"
           >
             {loading ? "Procesando..." : "Guardar nueva contraseña"}
           </button>
@@ -120,14 +125,15 @@ export default function ResetPasswordPage() {
         <div className="mt-6 text-center">
           <button
             onClick={() => router.push("/login")}
-            className="text-emerald-700 text-sm hover:underline"
+            className="text-[#2C5959] text-sm hover:underline"
           >
             Volver al inicio de sesión
           </button>
         </div>
 
         <div className="mt-4 text-xs text-gray-400 text-center">
-          © {new Date().getFullYear()} PAMEQ - Plataforma de Mejoramiento en Calidad
+          © {new Date().getFullYear()} PAMEQ - Plataforma de Mejoramiento en
+          Calidad
         </div>
       </div>
     </div>
