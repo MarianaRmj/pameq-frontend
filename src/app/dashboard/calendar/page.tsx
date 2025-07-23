@@ -6,5 +6,7 @@ export default function CalendarPage() {
         Aquí se visualizará el calendario de actividades y eventos programados.
       </p>
     </div>
+
+
   );
 }

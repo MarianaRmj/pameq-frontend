@@ -36,69 +36,80 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="bg-white p-10 rounded-3xl shadow-2xl w-full max-w-md border border-gray-200">
-        {error && (
-          <div className="bg-red-100 text-red-700 rounded p-3 mb-4 text-center font-semibold border border-red-200">
-            {error}
-          </div>
-        )}
+    <div className="min-h-screen flex items-center justify-center bg-white font-nunito">
+      <div className="w-full max-w-md p-8 md:p-10 rounded-3xl shadow-2xl border border-gray-200">
+        {/* Logo y título */}
         <div className="flex flex-col items-center mb-6">
           <img
             src="/logo.png"
             alt="PAMEQ"
-            className="w-30 mb-2 drop-shadow-lg"
+            className="w-28 mb-2 drop-shadow"
             style={{ filter: "grayscale(100%) brightness(1.1)" }}
           />
-          <h2 className="text-2xl font-bold text-neutral-900 tracking-wide">
+          <h2 className="text-2xl font-bold text-[#2C5959] tracking-wide text-center">
             ¡Bienvenido a PAMEQ!
           </h2>
         </div>
+
+        {/* Mensaje de error */}
+        {error && (
+          <div className="bg-red-100 text-red-700 rounded-lg p-3 mb-4 text-center font-semibold border border-red-300 text-sm">
+            {error}
+          </div>
+        )}
+
+        {/* Formulario */}
         <form onSubmit={handleLogin} className="space-y-4">
-          <label className="block font-semibold text-neutral-800 mb-1">
-            Usuario
+          <div>
+            <label className="block font-semibold text-neutral-800 mb-1">
+              Usuario
+            </label>
             <input
               type="text"
-              className="w-full mt-1 p-2 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-neutral-900 bg-neutral-100 transition"
+              className="w-full p-2 rounded-xl border border-gray-300 bg-neutral-100 text-neutral-900 focus:outline-none focus:ring-2 focus:ring-[#2C5959] transition"
               value={usuario}
               onChange={(e) => setUsuario(e.target.value)}
               required
               autoFocus
               autoComplete="username"
             />
-          </label>
-          <label className="block font-semibold text-neutral-800 mb-1">
-            Contraseña
+          </div>
+          <div>
+            <label className="block font-semibold text-neutral-800 mb-1">
+              Contraseña
+            </label>
             <input
               type="password"
-              className="w-full mt-1 p-2 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-neutral-900 bg-neutral-100 transition"
+              className="w-full p-2 rounded-xl border border-gray-300 bg-neutral-100 text-neutral-900 focus:outline-none focus:ring-2 focus:ring-[#2C5959] transition"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               autoComplete="current-password"
             />
-          </label>
+          </div>
           <button
             type="submit"
             disabled={loading}
-            className="w-full mt-2 bg-[#2C5959] hover:bg-emerald-800 text-white py-2 rounded-xl font-semibold transition shadow"
+            className="w-full mt-2 bg-[#2C5959] hover:bg-[#1f403f] text-white py-2 rounded-xl font-semibold transition shadow disabled:opacity-60"
           >
             {loading ? "Iniciando..." : "Iniciar Sesión"}
           </button>
         </form>
-        <div className="mt-5 flex flex-col gap-1 text-sm text-center">
+
+        {/* Recuperar contraseña */}
+        <div className="mt-5 text-sm text-center">
           <Link
             href="/recover/reset-password"
-            className="text-emerald-700 hover:underline hover:text-emerald-900 transition"
+            className="text-[#2C5959] hover:underline hover:text-emerald-900 transition"
           >
             ¿Olvidaste tu contraseña?
           </Link>
         </div>
+
+        {/* Pie de página */}
         <div className="mt-6 text-xs text-gray-400 text-center">
-          <span>
-            © {new Date().getFullYear()} PAMEQ - Plataforma de Mejoramiento en
-            Calidad
-          </span>
+          © {new Date().getFullYear()} PAMEQ - Plataforma de Mejoramiento en
+          Calidad
         </div>
       </div>
     </div>

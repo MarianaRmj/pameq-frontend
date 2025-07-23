@@ -5,7 +5,7 @@ import { FiArrowLeft } from "react-icons/fi";
 
 export default function RequestPassword() {
   return (
-    <main className="bg-blancoSuave p-2 pt-11 flex flex-col items-center">
+    <main className="p-2 pt-11 flex flex-col items-center font-nunito">
       <div className="w-full max-w-6xl flex items-center justify-between">
         <Link
           href={routes.login}
