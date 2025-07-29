@@ -19,7 +19,6 @@ interface Props {
   setCurrentPage: (page: number) => void;
 }
 
-// Subcomponente para una fila editable
 const CicloRow = ({
   ciclo,
   index,

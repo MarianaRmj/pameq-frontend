@@ -3,15 +3,23 @@
 import { useEffect, useState } from "react";
 import { UserResponseDto } from "./types";
 
-interface Props {
+interface EditUserModalProps {
   user: UserResponseDto | null;
   isOpen: boolean;
   onClose: () => void;
-  onSave: (updatedUser: Partial<UserResponseDto>) => void;
+  onSave: (updated: Partial<UserResponseDto>) => void;
   sedes: { id: number; nombre_sede: string }[];
+  roles: string[]; // ✅ AGREGA ESTO
 }
 
-export const EditUserModal = ({ user, isOpen, onClose, onSave, sedes }: Props) => {
+export const EditUserModal = ({
+  user,
+  isOpen,
+  onClose,
+  onSave,
+  sedes,
+  roles,
+}: EditUserModalProps) => {
   const [formState, setFormState] = useState<Partial<UserResponseDto>>({});
 
   useEffect(() => {
@@ -22,7 +30,9 @@ export const EditUserModal = ({ user, isOpen, onClose, onSave, sedes }: Props) =
 
   if (!isOpen || !user) return null;
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     setFormState((prev) => ({ ...prev, [name]: value }));
   };
@@ -34,7 +44,9 @@ export const EditUserModal = ({ user, isOpen, onClose, onSave, sedes }: Props) =
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
       <div className="bg-white p-6 rounded-xl w-full max-w-lg shadow-xl">
-        <h2 className="text-xl font-bold mb-4 text-verdeOscuro">Editar Usuario</h2>
+        <h2 className="text-xl font-bold mb-4 text-verdeOscuro">
+          Editar Usuario
+        </h2>
 
         <div className="grid grid-cols-1 gap-4">
           <input
@@ -58,9 +70,11 @@ export const EditUserModal = ({ user, isOpen, onClose, onSave, sedes }: Props) =
             className="border px-3 py-2 rounded"
           >
             <option value="">Seleccionar rol</option>
-            <option value="admin">Admin</option>
-            <option value="editor">Editor</option>
-            <option value="usuario">Usuario</option>
+            {roles.map((rol) => (
+              <option key={rol} value={rol}>
+                {rol.charAt(0).toUpperCase() + rol.slice(1)}
+              </option>
+            ))}
           </select>
           <select
             name="sedeId"
