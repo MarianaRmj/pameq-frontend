@@ -1,13 +1,25 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { UserResponseDto } from "./types";
+import { CreateUserDto, UserResponseDto } from "./types";
 import { EditUserModal } from "./EditUserModal";
 import { useConfirm } from "@/hooks/useConfirm";
+import { CreateUserModal } from "./CreateUserModal";
+
+const rolesDisponibles = [
+  "admin",
+  "coordinador",
+  "evaluador",
+  "usuario",
+  "editor",
+] as const;
 
 export const UsersTable = () => {
   const [users, setUsers] = useState<UserResponseDto[]>([]);
+  const [totalPages, setTotalPages] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
   const [sedes, setSedes] = useState<{ id: number; nombre_sede: string }[]>([]);
+  const limit = 10; // Número de usuarios por página
   const [selectedUser, setSelectedUser] = useState<UserResponseDto | null>(
     null
   );
@@ -17,34 +29,71 @@ export const UsersTable = () => {
     tipo: "success" | "error";
     mensaje: string;
   }>(null);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
 
+  // Fetching users and sedes
   useEffect(() => {
     const fetchData = async () => {
-      const [usersRes, sedesRes] = await Promise.all([
-        fetch("http://localhost:3001/users"),
-        fetch("http://localhost:3001/sedes"),
-      ]);
+      try {
+        const [usersRes, sedesRes] = await Promise.all([
+          fetch("http://localhost:3001/users"),
+          fetch("http://localhost:3001/sedes"),
+        ]);
 
-      const usersData = await usersRes.json();
-      const sedesData = await sedesRes.json();
+        const usersData = await usersRes.json();
+        const sedesData = await sedesRes.json();
 
-      // Agregar sedeNombre al usuario
-      const usuariosConSede = usersData.map((user: UserResponseDto) => {
-        const sede = sedesData.find(
-          (s: { id: number; nombre_sede: string }) => s.id === user.sedeId
-        );
-        return {
-          ...user,
-          sedeNombre: sede?.nombre_sede || null,
-        };
-      });
+        // Comprobamos la estructura de los datos
+        console.log("Usuarios:", usersData);
+        console.log("Sedes:", sedesData);
 
-      setUsers(usuariosConSede);
-      setSedes(sedesData);
+        if (Array.isArray(usersData)) {
+          const usuariosConSede = usersData.map((user: UserResponseDto) => {
+            const sede = sedesData.find(
+              (s: { id: number; nombre_sede: string }) => s.id === user.sedeId
+            );
+            return {
+              ...user,
+              sedeNombre: sede?.nombre_sede || "-",
+            };
+          });
+          setUsers(usuariosConSede);
+        }
+
+        setSedes(sedesData);
+      } catch (error) {
+        console.error("Error al obtener datos:", error);
+      }
     };
 
     fetchData();
   }, []);
+
+  const fetchUsers = async (page: number) => {
+    try {
+      const response = await fetch(
+        `http://localhost:3001/users?page=${String(page)}&limit=${String(
+          limit
+        )}`
+      );
+      const data = await response.json();
+      console.log("Usuarios paginados:", data);
+
+      if (response.ok && Array.isArray(data.users)) {
+        setUsers(data.users);
+        setTotalPages(data.totalPages);
+        setCurrentPage(data.currentPage);
+      } else {
+        console.error("Error en la API de usuarios:", response.status);
+      }
+    } catch (error) {
+      console.error("Error al obtener usuarios:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers(currentPage);
+  }, [currentPage]);
 
   const handleEditClick = (user: UserResponseDto) => {
     setSelectedUser(user);
@@ -56,6 +105,7 @@ export const UsersTable = () => {
     setSelectedUser(null);
   };
 
+  // Save updated user data
   const handleSaveUser = async (updated: Partial<UserResponseDto>) => {
     if (!selectedUser) return;
 
@@ -79,7 +129,7 @@ export const UsersTable = () => {
           sedes.find(
             (s) => s.id === updatedUser.sedeId || s.id === updatedUser.sede?.id
           )?.nombre_sede ||
-          null;
+          "-";
 
         setUsers((prev) =>
           prev.map((u) =>
@@ -107,6 +157,50 @@ export const UsersTable = () => {
     });
   };
 
+  const handleCreateUser = async (nuevo: CreateUserDto) => {
+    try {
+      const res = await fetch("http://localhost:3001/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(nuevo),
+      });
+
+      const nuevoUsuario = await res.json();
+
+      // Asegúrate de que la sedeNombre se obtenga correctamente
+      const sedeNombre =
+        nuevoUsuario.sede?.nombre_sede || // Si la sede está en los datos del nuevo usuario
+        sedes.find((sede) => sede.id === nuevoUsuario.sedeId)?.nombre_sede || // Si la sede está en la lista de sedes cargadas
+        "-"; // Si no hay sede, mostrar un guión
+
+      // Actualiza el estado de los usuarios
+      setUsers((prev) => [
+        ...prev,
+        {
+          ...nuevoUsuario,
+          sedeNombre, // Asegura que la sede se incluya en el nuevo usuario
+        },
+      ]);
+
+      // Cierra el modal
+      setIsCreateOpen(false);
+
+      // Mostrar alerta de éxito
+      setAlerta({
+        tipo: "success",
+        mensaje: "✅ Usuario creado correctamente.",
+      });
+      setTimeout(() => setAlerta(null), 4000);
+    } catch (error) {
+      console.error("Error creando usuario:", error);
+      // Mostrar alerta de error
+      setAlerta({
+        tipo: "error",
+        mensaje: "❌ Error creando usuario",
+      });
+    }
+  };
+
   return (
     <div className="bg-white shadow rounded-xl p-6">
       <h2 className="text-2xl font-bold text-verdeOscuro mb-4">
@@ -123,6 +217,14 @@ export const UsersTable = () => {
           {alerta.mensaje}
         </div>
       )}
+      <div className="flex justify-end mb-2">
+        <button
+          onClick={() => setIsCreateOpen(true)}
+          className="bg-verdeOscuro text-white px-2 py-1 rounded hover:bg-verdeClaro transition"
+        >
+          ➕ Nuevo Usuario
+        </button>
+      </div>
       <div className="overflow-x-auto">
         <table className="w-full border border-gray-200 text-sm">
           <thead className="bg-verdeOscuro text-white">
@@ -135,23 +237,31 @@ export const UsersTable = () => {
             </tr>
           </thead>
           <tbody>
-            {users.map((user) => (
-              <tr key={user.id} className="border-t hover:bg-verdeClaro/10">
-                <td className="p-2">{user.nombre}</td>
-                <td className="p-2">{user.email}</td>
-                <td className="p-2 capitalize">{user.rol}</td>
-                <td className="p-2">{user.sedeNombre || "-"}</td>
-                <td className="p-2 text-center">
-                  <button
-                    onClick={() => handleEditClick(user)}
-                    className="text-blue-600 hover:text-blue-800"
-                    title="Editar"
-                  >
-                    ✏️
-                  </button>
+            {Array.isArray(users) && users.length > 0 ? (
+              users.map((user) => (
+                <tr key={user.id} className="border-t hover:bg-verdeClaro/10">
+                  <td className="p-2">{user.nombre}</td>
+                  <td className="p-2">{user.email}</td>
+                  <td className="p-2 capitalize">{user.rol}</td>
+                  <td className="p-2">{user.sedeNombre || "-"}</td>
+                  <td className="p-2 text-center">
+                    <button
+                      onClick={() => handleEditClick(user)}
+                      className="text-blue-600 hover:text-blue-800"
+                      title="Editar"
+                    >
+                      ✏️
+                    </button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={5} className="p-4 text-center text-gray-500">
+                  No hay usuarios disponibles.
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>
@@ -161,8 +271,36 @@ export const UsersTable = () => {
         onClose={handleCloseModal}
         onSave={handleSaveUser}
         sedes={sedes}
+        roles={[...rolesDisponibles]}
       />
-      <ConfirmModal /> {/* ✅ Renderiza el modal al final */}
+      <ConfirmModal />
+      <CreateUserModal
+        isOpen={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
+        onSave={handleCreateUser}
+        sedes={sedes}
+        roles={[...rolesDisponibles]}
+      />
+      <div>
+        <div className="flex justify-center items-center gap-1 mt-2">
+          <button
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            className="px-2 rounded border bg-gray-100 hover:bg-gray-100 disabled:opacity-50"
+          >
+            Anterior
+          </button>
+          <button
+            disabled={currentPage === totalPages}
+            onClick={() =>
+              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+            }
+            className="px-3 rounded border bg-gray-100 hover:bg-gray-200 disabled:opacity-50"
+          >
+            Siguiente
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
