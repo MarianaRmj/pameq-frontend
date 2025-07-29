@@ -2,6 +2,9 @@
 module.exports = {
   content: [
     "./src/**/*.{js,ts,jsx,tsx}",
+    "./app/**/*.{js,ts,jsx,tsx}",
+    "./pages/**/*.{js,ts,jsx,tsx}",
+    "./components/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
     extend: {
@@ -15,12 +18,12 @@ module.exports = {
         blancoConVerde: "#e4f7ec",
       },
       fontFamily: {
-        nunito: ['Nunito', 'sans-serif'],
-        geist: ['Geist', 'sans-serif'],
-        mono: ['Fira Code', 'monospace'],
-        nunitoSans: ['Nunito Sans', 'sans-serif'],
+        nunito: ["Nunito", "sans-serif"],
+        geist: ["Geist", "sans-serif"],
+        mono: ["Fira Code", "monospace"],
+        nunitoSans: ["Nunito Sans", "sans-serif"],
       },
     },
   },
   plugins: [],
-}
+};
