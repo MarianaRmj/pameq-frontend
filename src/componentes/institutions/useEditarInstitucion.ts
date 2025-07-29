@@ -218,12 +218,39 @@ export const useEditarInstitucion = () => {
   };
 
   const eliminarCiclo = (index: number) => {
-    confirm("¿Está seguro de eliminar ✖️ este ciclo?", () => {
-      setCiclos((prev) => prev.filter((_, i) => i !== index));
-      setAlerta({
-        tipo: "success",
-        mensaje: "Ciclo eliminado correctamente.",
-      });
+    const ciclo = ciclos[index];
+
+    confirm("¿Está seguro de eliminar ✖️ este ciclo, una vez lo elimine no podra recuperarlo?", async () => {
+      try {
+        // Si el ciclo ya está en la base de datos, elimínalo del backend
+        if (ciclo.id) {
+          const response = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/institutions/ciclos/${ciclo.id}`,
+            {
+              method: "DELETE",
+            }
+          );
+
+          if (!response.ok) {
+            const error = await response.json().catch(() => ({}));
+            throw new Error(error.message || "Error al eliminar ciclo");
+          }
+        }
+
+        // Luego, elimínalo del estado local
+        setCiclos((prev) => prev.filter((_, i) => i !== index));
+
+        setAlerta({
+          tipo: "success",
+          mensaje: "✅ Ciclo eliminado correctamente.",
+        });
+      } catch (error) {
+        console.error("❌ Error al eliminar ciclo:", error);
+        setAlerta({
+          tipo: "error",
+          mensaje: `❌ Error: ${(error as Error).message}`,
+        });
+      }
     });
   };
 
