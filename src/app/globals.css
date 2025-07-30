@@ -6,15 +6,39 @@
   .animate-fade-in-up {
     animation: fadeInUp 0.4s ease-out forwards;
   }
-
   @keyframes fadeInUp {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(20px);}
+    to { opacity: 1; transform: translateY(0);}
   }
 }
+
+/* ----------- FullCalendar Custom Styles ----------- */
+.fc .fc-toolbar-title {
+  color: #2C5959;
+  font-weight: 700;
+  font-size: 1.3rem;
+}
+.fc .fc-button {
+  background: #2C5959;
+  border: none;
+  color: #fff;
+  border-radius: 0.3rem;
+  box-shadow: 0 1px 3px rgba(255, 255, 255, 0.628);
+  transition: background 0.15s;
+}
+.fc .fc-button-primary:not(:disabled):active,
+.fc .fc-button-primary:not(:disabled).fc-button-active {
+  background: #2C5959;
+}
+.fc {
+  background: transparent !important;
+  border-radius: 1rem;
+}
+
+.fc-event, .fc-event-main {
+  border-radius: 0.8rem !important;
+  padding: 0 6px !important;
+  box-shadow: 0 1px 4px #0001;
+  font-weight: 500;
+}
+

@@ -1,12 +1,9 @@
-export default function CalendarPage() {
+import CalendarioEventos from "@/componentes/calendar/CalendarioEventos";
+
+export default function CalendarioPage() {
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold text-verdeOscuro">Calendario</h1>
-      <p className="mt-2 text-gray-700">
-        Aquí se visualizará el calendario de actividades y eventos programados.
-      </p>
-    </div>
-
-
+    <main className="min-h-screen bg-[#f2f2f03a] p-4">
+      <CalendarioEventos />
+    </main>
   );
 }

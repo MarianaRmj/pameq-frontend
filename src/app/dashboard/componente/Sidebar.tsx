@@ -39,12 +39,16 @@ export default function Sidebar() {
     <aside className="w-64 bg-[#2C5959] text-white p-5 border-r-4 font-nunito shadow-md min-h-screen flex flex-col justify-between">
 
       {/* Parte superior */}
-      <div>
+
         {/* Logo y Usuario */}
         <div className="flex flex-col items-center mb-10">
-          <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow border border-gray-200">
-            <span className="text-sm text-[#2C5959] font-semibold">Sin imagen</span>
-          </div>
+         <div className="flex flex-col items-center mb-6">
+          <img
+            src="/logo2.png"
+            alt="PAMEQ"
+            className="w-28 drop-shadow"
+            style={{ filter: "grayscale(100%) brightness(3.3)" }}
+          />
           <h1 className="mt-3 text-lg font-bold tracking-wide">IPS Colombia</h1>
           <p className="text-sm text-neutral-200">Usuario Admin</p>
         </div>
