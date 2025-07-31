@@ -53,7 +53,7 @@ export default function Login() {
 
         {/* Mensaje de error */}
         {error && (
-          <div className="bg-red-100 text-red-700 rounded-lg p-3 mb-4 text-center font-semibold border border-red-300 text-sm">
+          <div className="bg-red-100 text-red-700 rounded-lg p-3 mb-4 text-center font-nunito border border-red-300 text-sm">
             {error}
           </div>
         )}
@@ -61,7 +61,7 @@ export default function Login() {
         {/* Formulario */}
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="block font-semibold text-neutral-800 mb-1">
+            <label className="block font-nunito text-neutral-800 mb-1">
               Usuario
             </label>
             <input
@@ -75,7 +75,7 @@ export default function Login() {
             />
           </div>
           <div>
-            <label className="block font-semibold text-neutral-800 mb-1">
+            <label className="block font-nunito text-neutral-800 mb-1">
               Contraseña
             </label>
             <input
@@ -90,7 +90,7 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full mt-2 bg-[#2C5959] hover:bg-[#1f403f] text-white py-2 rounded-xl font-semibold transition shadow disabled:opacity-60"
+            className="w-full mt-2 bg-[#2C5959] hover:bg-[#1f403f] text-white py-2 rounded-xl font-nunito transition shadow disabled:opacity-60"
           >
             {loading ? "Iniciando..." : "Iniciar Sesión"}
           </button>

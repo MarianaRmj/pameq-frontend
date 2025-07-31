@@ -28,7 +28,7 @@ export const InstitucionFormFields = ({ formData, handleChange }: Props) => {
     <>
       {camposTexto.map((name) => (
         <div key={name}>
-          <label className="block mb-1 font-semibold capitalize text-verdeOscuro">
+          <label className="block mb-1 font-nunito capitalize text-verdeOscuro">
             {name.replace(/_/g, " ")}
           </label>
           <input
@@ -43,7 +43,7 @@ export const InstitucionFormFields = ({ formData, handleChange }: Props) => {
 
       {Object.entries(selects).map(([key, options]) => (
         <div key={key}>
-          <label className="block mb-1 font-semibold capitalize text-verdeOscuro">
+          <label className="block mb-1 font-nunito capitalize text-verdeOscuro">
             {key.replace(/_/g, " ")}
           </label>
           <select

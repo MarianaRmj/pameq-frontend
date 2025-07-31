@@ -105,12 +105,12 @@ export function CrearEventoModal({
         >
           ×
         </button>
-        <h3 className="text-xl font-bold text-[#2C5959] mb-4">
+        <h3 className="text-xl font-nunito text-[#2C5959] mb-4">
           Crear nuevo evento
         </h3>
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
-            <label className="block text-sm font-semibold mb-1">Título *</label>
+            <label className="block text-sm font-nunito mb-1">Título *</label>
             <input
               type="text"
               className="w-full rounded-lg border border-gray-300 px-3 py-2"
@@ -120,7 +120,7 @@ export function CrearEventoModal({
             />
           </div>
           <div>
-            <label className="block text-sm font-semibold mb-1">
+            <label className="block text-sm font-nunito mb-1">
               Descripción
             </label>
             <textarea
@@ -133,7 +133,7 @@ export function CrearEventoModal({
             />
           </div>
           <div>
-            <label className="block text-sm font-semibold mb-1">Tipo *</label>
+            <label className="block text-sm font-nunito mb-1">Tipo *</label>
             <select
               className="w-full rounded-lg border border-gray-300 px-3 py-2"
               value={form.tipo}
@@ -147,7 +147,7 @@ export function CrearEventoModal({
           </div>
           <div className="bg-white p-6 rounded-xl w-full max-w-lg shadow-xl border border-verdeSuave animate-fade-in-up relative">
             <div className="flex-1">
-              <label className="block text-sm font-semibold mb-1">
+              <label className="block text-sm font-nunito mb-1">
                 Fecha inicio *
               </label>
               <input
@@ -159,7 +159,7 @@ export function CrearEventoModal({
               />
             </div>
             <div className="flex-1">
-              <label className="block text-sm font-semibold mb-1">
+              <label className="block text-sm font-nunito mb-1">
                 Fecha fin *
               </label>
               <input
@@ -177,7 +177,7 @@ export function CrearEventoModal({
             <button
               type="submit"
               disabled={saving}
-              className="bg-[#33A691] hover:bg-[#2C5959] text-white font-semibold py-2 px-4 rounded-lg shadow"
+              className="bg-[#33A691] hover:bg-[#2C5959] text-white font-nunito py-2 px-4 rounded-lg shadow"
             >
               {saving ? "Guardando..." : "Guardar"}
             </button>

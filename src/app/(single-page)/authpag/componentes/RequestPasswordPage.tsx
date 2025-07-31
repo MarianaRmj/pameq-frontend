@@ -42,12 +42,12 @@ export default function RecoverPasswordPage() {
       <div className="w-full max-w-md p-8 md:p-10 bg-white rounded-3xl shadow-2xl border border-gray-200">
         {/* Mensajes */}
         {error && (
-          <div className="bg-red-100 text-red-700 rounded-lg p-3 mb-4 text-center font-semibold border border-red-300 text-sm">
+          <div className="bg-red-100 text-red-700 rounded-lg p-3 mb-4 text-center font-nunito border border-red-300 text-sm">
             {error}
           </div>
         )}
         {success && (
-          <div className="bg-green-100 text-green-700 rounded-lg p-3 mb-4 text-center font-semibold border border-green-300 text-sm">
+          <div className="bg-green-100 text-green-700 rounded-lg p-3 mb-4 text-center font-nunito border border-green-300 text-sm">
             {success}
           </div>
         )}
@@ -62,7 +62,7 @@ export default function RecoverPasswordPage() {
             className="mb-2 drop-shadow"
             style={{ filter: "grayscale(100%) brightness(1.1)" }}
           />
-          <h2 className="text-2xl font-bold text-[#2C5959] tracking-wide text-center">
+          <h2 className="text-2xl font-nunito text-[#2C5959] tracking-wide text-center">
             Recuperar contraseña
           </h2>
           <p className="text-sm text-gray-500 text-center mt-1">
@@ -73,7 +73,7 @@ export default function RecoverPasswordPage() {
         {/* Formulario */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block font-semibold text-neutral-800 mb-1">
+            <label className="block font-nunito text-neutral-800 mb-1">
               Correo electrónico
             </label>
             <input
@@ -88,7 +88,7 @@ export default function RecoverPasswordPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full mt-2 bg-[#2C5959] hover:bg-[#1f403f] text-white py-2 rounded-xl font-semibold transition shadow disabled:opacity-60"
+            className="w-full mt-2 bg-[#2C5959] hover:bg-[#1f403f] text-white py-2 rounded-xl font-nunito transition shadow disabled:opacity-60"
           >
             {loading ? "Enviando..." : "Enviar enlace"}
           </button>

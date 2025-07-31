@@ -31,7 +31,7 @@ export default function EditarInstitucion() {
 
   return (
     <section className="max-w-6xl mx-auto mt-6 px-6 py-6 bg-white rounded-3xl shadow-lg font-nunito text-negro">
-      <h2 className="text-3xl font-bold text-verdeOscuro mb-8 tracking-wide">
+      <h2 className="text-3xl font-nunito text-verdeOscuro mb-8 tracking-wide">
         Parametrización de Institución
       </h2>
       <form
@@ -85,7 +85,7 @@ export default function EditarInstitucion() {
             <div className="flex-1 text-sm">{alerta.mensaje}</div>
             <button
               onClick={() => setAlerta(null)}
-              className="text-xl font-bold text-gray-500 hover:text-gray-700"
+              className="text-xl font-nunito text-gray-500 hover:text-gray-700"
             >
               ×
             </button>

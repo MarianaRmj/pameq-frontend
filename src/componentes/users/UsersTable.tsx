@@ -203,12 +203,12 @@ export const UsersTable = () => {
 
   return (
     <div className="bg-white shadow rounded-xl p-6">
-      <h2 className="text-2xl font-bold text-verdeOscuro mb-4">
+      <h2 className="text-2xl font-nunito text-verdeOscuro mb-4">
         Usuarios por Sede
       </h2>
       {alerta && (
         <div
-          className={`my-2 px-4 py-2 rounded text-sm font-semibold ${
+          className={`my-2 px-4 py-2 rounded text-sm font-nunito ${
             alerta.tipo === "success"
               ? "bg-green-100 text-green-700 border border-green-300"
               : "bg-red-100 text-red-700 border border-red-300"
@@ -220,13 +220,13 @@ export const UsersTable = () => {
       <div className="flex justify-end mb-2">
         <button
           onClick={() => setIsCreateOpen(true)}
-          className="bg-verdeOscuro text-white px-2 py-1 rounded hover:bg-verdeClaro transition"
+          className="bg-verdeOscuro font-nunito text-white px-2 py-1 rounded hover:bg-verdeClaro transition"
         >
           ➕ Nuevo Usuario
         </button>
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full border border-gray-200 text-sm">
+        <table className="w-full border border-gray-200 text-sm font-nunito">
           <thead className="bg-verdeOscuro text-white">
             <tr>
               <th className="p-2 text-left">Nombre</th>
@@ -239,7 +239,7 @@ export const UsersTable = () => {
           <tbody>
             {Array.isArray(users) && users.length > 0 ? (
               users.map((user) => (
-                <tr key={user.id} className="border-t hover:bg-verdeClaro/10">
+                <tr key={user.id} className="border-t hover:bg-verdeClaro/10 font-nunito">
                   <td className="p-2">{user.nombre}</td>
                   <td className="p-2">{user.email}</td>
                   <td className="p-2 capitalize">{user.rol}</td>
