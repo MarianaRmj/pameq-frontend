@@ -127,7 +127,7 @@ export default function CalendarioEventos() {
         className="cursor-pointer max-w-[115px] overflow-hidden text-ellipsis whitespace-nowrap"
         style={{ display: "flex", alignItems: "center" }}
       >
-        <span className="font-semibold">
+        <span className="font-nunito">
           {icon}
           {eventInfo.event.title}
         </span>
@@ -138,7 +138,7 @@ export default function CalendarioEventos() {
   return (
     <div className="max-w-5xl mx-auto mt-8 animate-fade-in-up">
       <div className="bg-white rounded-2xl shadow-2xl p-6 border border-verdeSuave relative">
-        <h2 className="text-2xl font-bold text-[#2C5959] mb-2 flex items-center gap-2">
+        <h2 className="text-2xl font-nunito text-[#2C5959] mb-2 flex items-center gap-2">
           <svg
             className="h-7 w-7 text-[#33A691]"
             fill="none"
@@ -181,7 +181,7 @@ export default function CalendarioEventos() {
           )}
           <div className="flex justify-end mb-3 py-5">
             <button
-              className="bg-verdeOscuro hover:bg-verdeClaro text-white font-semibold py-1 px-4 rounded-lg shadow transition-all"
+              className="bg-verdeOscuro hover:bg-verdeClaro text-white font-nunito py-1 px-4 rounded-lg shadow transition-all"
               onClick={() => setModalOpen(true)}
             >
               + Crear evento
@@ -202,7 +202,7 @@ export default function CalendarioEventos() {
               >
                 ×
               </button>
-              <h3 className="text-xl font-bold text-[#2C5959] mb-4 flex items-center gap-2">
+              <h3 className="text-xl font-nunito text-[#2C5959] mb-4 flex items-center gap-2">
                 <span>
                   {selectedEvent.extendedProps?.type === "reunion"
                     ? "📅"
@@ -214,7 +214,7 @@ export default function CalendarioEventos() {
               </h3>
               <div className="space-y-2">
                 <div>
-                  <span className="block text-xs font-bold text-gray-400">
+                  <span className="block text-xs font-nunito text-gray-400">
                     Descripción:
                   </span>
                   <span className="block text-base">
@@ -224,7 +224,7 @@ export default function CalendarioEventos() {
                 </div>
                 <div className="flex gap-2">
                   <div>
-                    <span className="block text-xs font-bold text-gray-400">
+                    <span className="block text-xs font-nunito text-gray-400">
                       Inicio:
                     </span>
                     <span className="block text-base">
@@ -234,7 +234,7 @@ export default function CalendarioEventos() {
                     </span>
                   </div>
                   <div>
-                    <span className="block text-xs font-bold text-gray-400">
+                    <span className="block text-xs font-nunito text-gray-400">
                       Fin:
                     </span>
                     <span className="block text-base">
@@ -245,7 +245,7 @@ export default function CalendarioEventos() {
                   </div>
                 </div>
                 <div>
-                  <span className="block text-xs font-bold text-gray-400">
+                  <span className="block text-xs font-nunito text-gray-400">
                     Tipo:
                   </span>
                   <span className="block text-base capitalize">
@@ -256,7 +256,7 @@ export default function CalendarioEventos() {
               {/* BOTONES */}
               <div className="flex justify-end gap-2 mt-6">
                 <button
-                  className="bg-verdeOscuro hover:bg-verdeClaro text-white px-2 rounded-md font-semibold"
+                  className="bg-verdeOscuro hover:bg-verdeClaro text-white px-2 rounded-md font-nunito"
                   onClick={() => {
                     setEditMode(true);
                     setDetailModalOpen(false);
@@ -265,7 +265,7 @@ export default function CalendarioEventos() {
                   Editar
                 </button>
                 <button
-                  className="bg-red-600 hover:bg-red-700 flex items-center gap-2 text-white px-2 rounded-md font-semibold transition-colors"
+                  className="bg-red-600 hover:bg-red-700 flex items-center gap-2 text-white px-2 rounded-md font-nunito transition-colors"
                   onClick={() => {
                     confirm(
                       "¿Estás seguro que deseas ✖️ eliminar este evento? Esta acción no se puede deshacer.",

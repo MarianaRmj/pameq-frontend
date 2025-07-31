@@ -3,7 +3,6 @@ import Link from "next/link";
 import { useState } from "react";
 import {
   FiChevronDown,
-  FiSettings,
   FiUsers,
   FiBarChart2,
   FiInfo,
@@ -25,10 +24,12 @@ import {
 } from "react-icons/fi";
 import { AiFillCalendar } from "react-icons/ai";
 import { BsFillBarChartFill } from "react-icons/bs";
+import { FaMapMarkedAlt, FaUniversity } from "react-icons/fa";
 
 export default function Sidebar() {
   const [openPamec, setOpenPamec] = useState(false);
   const [openInforme, setOpenInforme] = useState(false);
+  const [openParametrization, setOpenParametrization] = useState(false);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -49,14 +50,23 @@ export default function Sidebar() {
             className="w-28 drop-shadow"
             style={{ filter: "grayscale(100%) brightness(3.3)" }}
           />
-          <h1 className="mt-3 text-lg font-bold tracking-wide">IPS Colombia</h1>
-          <p className="text-sm text-neutral-200">Usuario Admin</p>
+          <h1 className="mt-3 text-lg font-nunito tracking-wide">IPS Colombia</h1>
+          <p className="text-sm font-nunito text-neutral-200">Usuario Admin</p>
         </div>
 
         {/* Navegación */}
         <nav className="space-y-2">
           <SidebarLink href="/dashboard" icon={<FiHome />}>Inicio</SidebarLink>
-          <SidebarLink href="/dashboard/parameterization" icon={<FiSettings />}>Parametrización</SidebarLink>
+
+            <DropdownSection
+            label="Parametrización"
+            isOpen={openParametrization}
+            toggleOpen={() => setOpenParametrization(!openParametrization)}
+            items={[
+              { label: "Institución", href: "/dashboard/parameterization", icon: <FaUniversity /> },
+              { label: "Sedes", href: "/dashboard/parameterization/sedes", icon: <FaMapMarkedAlt /> },
+            ]}
+          />
           <SidebarLink href="/dashboard/calendar" icon={<AiFillCalendar />}>Calendario</SidebarLink>
           <SidebarLink href="/dashboard/schedule" icon={<FiBarChart2 />}>Cronograma</SidebarLink>
           <SidebarLink href="/dashboard/activities" icon={<BsFillBarChartFill />}>Actividades Previas</SidebarLink>
@@ -103,7 +113,7 @@ export default function Sidebar() {
       <div className="mt-6">
         <button
           onClick={handleLogout}
-          className="flex items-center gap-2 w-full px-3 py-2 rounded-lg hover:bg-verdeClaro/90 transition-colors duration-200 text-sm font-medium text-white"
+          className="flex items-center gap-2 w-full px-3 py-2 rounded-lg hover:bg-verdeClaro/90 transition-colors duration-200 text-sm font-nunito text-white"
         >
           <FiLogOut className="text-lg" />
           Cerrar sesión

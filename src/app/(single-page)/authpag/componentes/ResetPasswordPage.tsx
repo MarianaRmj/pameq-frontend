@@ -54,12 +54,12 @@ export default function ResetPasswordPage() {
       <div className="w-full max-w-md p-8 md:p-10 bg-white rounded-3xl shadow-2xl border border-gray-200">
         {/* Mensajes */}
         {error && (
-          <div className="bg-red-100 text-red-700 rounded-lg p-3 mb-4 text-center font-semibold border border-red-300 text-sm">
+          <div className="bg-red-100 text-red-700 rounded-lg p-3 mb-4 text-center font-nunito border border-red-300 text-sm">
             {error}
           </div>
         )}
         {success && (
-          <div className="bg-green-100 text-green-700 rounded-lg p-3 mb-4 text-center font-semibold border border-green-300 text-sm">
+          <div className="bg-green-100 text-green-700 rounded-lg p-3 mb-4 text-center font-nunito border border-green-300 text-sm">
             {success}
           </div>
         )}
@@ -74,10 +74,10 @@ export default function ResetPasswordPage() {
             className="mb-2 drop-shadow"
             style={{ filter: "grayscale(100%) brightness(1.1)" }}
           />
-          <h2 className="text-2xl font-bold text-[#2C5959] tracking-wide text-center">
+          <h2 className="text-2xl font-nunito text-[#2C5959] tracking-wide text-center">
             Restablecer contraseña
           </h2>
-          <p className="text-sm text-gray-500 text-center mt-1">
+          <p className="text-sm text-gray-500 text-center mt-1 font-nunito">
             Ingresa y confirma tu nueva contraseña para continuar.
           </p>
         </div>
@@ -85,7 +85,7 @@ export default function ResetPasswordPage() {
         {/* Formulario */}
         <form onSubmit={handleReset} className="space-y-4">
           <div>
-            <label className="block font-semibold text-neutral-800 mb-1">
+            <label className="block font-nunito text-neutral-800 mb-1">
               Nueva contraseña
             </label>
             <input
@@ -99,7 +99,7 @@ export default function ResetPasswordPage() {
           </div>
 
           <div>
-            <label className="block font-semibold text-neutral-800 mb-1">
+            <label className="block font-nunito text-neutral-800 mb-1">
               Confirmar contraseña
             </label>
             <input
@@ -115,14 +115,14 @@ export default function ResetPasswordPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full mt-2 bg-[#2C5959] hover:bg-[#1f403f] text-white py-2 rounded-xl font-semibold transition shadow disabled:opacity-60"
+            className="w-full mt-2 bg-[#2C5959] hover:bg-[#1f403f] text-white py-2 rounded-xl font-nunito transition shadow disabled:opacity-60"
           >
             {loading ? "Procesando..." : "Guardar nueva contraseña"}
           </button>
         </form>
 
         {/* Footer */}
-        <div className="mt-6 text-center">
+        <div className="mt-6 text-center font-nunito">
           <button
             onClick={() => router.push("/login")}
             className="text-[#2C5959] text-sm hover:underline"
@@ -131,7 +131,7 @@ export default function ResetPasswordPage() {
           </button>
         </div>
 
-        <div className="mt-4 text-xs text-gray-400 text-center">
+        <div className="mt-4 text-xs text-gray-400 text-center font-nunito">
           © {new Date().getFullYear()} PAMEQ - Plataforma de Mejoramiento en
           Calidad
         </div>

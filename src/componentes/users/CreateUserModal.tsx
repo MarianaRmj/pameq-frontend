@@ -56,11 +56,11 @@ export const CreateUserModal = ({
         onSubmit={handleSubmit}
         className="bg-white p-6 rounded-xl shadow-xl w-[400px]"
       >
-        <h2 className="text-xl font-bold mb-4 text-verdeOscuro">
+        <h2 className="text-xl font-nunito mb-4 text-verdeOscuro">
           Crear Nuevo Usuario
         </h2>
         <div className="mb-2">
-          <label className="block text-sm font-semibold">Nombre</label>
+          <label className="block text-sm font-nunito">Nombre</label>
           <input
             name="nombre"
             value={formData.nombre}
@@ -70,7 +70,7 @@ export const CreateUserModal = ({
           />
         </div>
         <div className="mb-2">
-          <label className="block text-sm font-semibold">Email</label>
+          <label className="block text-sm font-nunito">Email</label>
           <input
             name="email"
             value={formData.email}
@@ -81,7 +81,7 @@ export const CreateUserModal = ({
           />
         </div>
         <div className="mb-2">
-          <label className="block text-sm font-semibold">Contraseña</label>
+          <label className="block text-sm font-nunito">Contraseña</label>
           <input
             name="password"
             value={formData.password}
@@ -92,7 +92,7 @@ export const CreateUserModal = ({
           />
         </div>
         <div className="mb-2">
-          <label className="block text-sm font-semibold">Rol</label>
+          <label className="block text-sm font-nunito">Rol</label>
           <select
             name="rol"
             value={formData.rol}
@@ -109,7 +109,7 @@ export const CreateUserModal = ({
           </select>
         </div>
         <div className="mb-4">
-          <label className="block text-sm font-semibold">Sede</label>
+          <label className="block text-sm font-nunito">Sede</label>
           <select
             name="sedeId"
             value={formData.sedeId || ""}
@@ -124,7 +124,7 @@ export const CreateUserModal = ({
             ))}
           </select>
         </div>
-        <div className="flex justify-end gap-3">
+        <div className="flex justify-end gap-3 font-nunito">
           <button
             type="button"
             onClick={onClose}

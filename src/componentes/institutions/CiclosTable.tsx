@@ -76,7 +76,7 @@ const CicloRow = ({
           onChange={(e) =>
             updateCiclo(index, "estado", e.target.value as CicloForm["estado"])
           }
-          className={`w-full px-2 py-1 text-sm rounded font-semibold text-center ${
+          className={`w-full px-2 py-1 text-sm rounded font-nunito text-center ${
             estadoEstilo[ciclo.estado]
           }`}
         >
@@ -96,7 +96,7 @@ const CicloRow = ({
         />
       </td>
 
-      <td className="p-2 text-center whitespace-nowrap">
+      <td className="p-1 text-center whitespace-nowrap">
         <button
           type="button"
           onClick={() => saveCiclo(index)}
@@ -108,10 +108,10 @@ const CicloRow = ({
         <button
           type="button"
           onClick={() => eliminarCiclo(index)}
-          className="text-red-500 text-lg ml-2 hover:text-red-700 transition"
+          className="text-red-500 text-lg ml-1 hover:text-red-700 transition"
           title="Eliminar ciclo"
         >
-          ❌
+          🗑️
         </button>
       </td>
     </tr>
@@ -131,7 +131,7 @@ export const CiclosTable = ({
 }: Props) => {
   return (
     <div className="md:col-span-2 mt-3">
-      <h3 className="text-xl font-bold text-verdeOscuro mb-2">Ciclos</h3>
+      <h3 className="text-xl font-nunito text-verdeOscuro mb-2">Ciclos</h3>
 
       <div className="overflow-x-auto rounded-xl border border-gray-200">
         <table className="w-full text-sm">
@@ -146,7 +146,7 @@ export const CiclosTable = ({
                 "Observaciones",
                 "Acciones",
               ].map((h) => (
-                <th key={h} className="p-3 text-left font-semibold">
+                <th key={h} className="p-3 text-left font-nunito">
                   {h}
                 </th>
               ))}
