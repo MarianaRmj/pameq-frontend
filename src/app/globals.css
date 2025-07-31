@@ -42,3 +42,10 @@
   font-weight: 500;
 }
 
+.fc-event-title,
+.fc .fc-event-title {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

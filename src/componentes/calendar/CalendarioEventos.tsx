@@ -9,6 +9,8 @@ import { Tooltip } from "react-tooltip";
 import esLocale from "@fullcalendar/core/locales/es";
 import { CrearEventoModal } from "./CrearEventoModal";
 import type { EventContentArg } from "@fullcalendar/core";
+import type { EventApi } from "@fullcalendar/core";
+import { useConfirm } from "@/hooks/useConfirm";
 
 type BackendEvent = {
   id: number | string;
@@ -22,11 +24,12 @@ type BackendEvent = {
 export default function CalendarioEventos() {
   const [events, setEvents] = useState<EventInput[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // Modal estado
+  const [selectedEvent, setSelectedEvent] = useState<EventApi | null>(null);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const { confirm, ConfirmModal } = useConfirm();
 
-  // 1. Cargar eventos desde el backend, mapeando a los nombres de FullCalendar
   useEffect(() => {
     fetch("http://localhost:3001/events")
       .then((res) => res.json())
@@ -34,8 +37,8 @@ export default function CalendarioEventos() {
         setEvents(
           data.map((e: BackendEvent) => ({
             id: String(e.id),
-            title: e.titulo,          // mapea a 'title'
-            start: e.inicio,          // mapea a 'start'
+            title: e.titulo,
+            start: e.inicio,
             end: e.fin,
             description: e.descripcion,
             type: e.tipo,
@@ -58,8 +61,6 @@ export default function CalendarioEventos() {
       });
   }, []);
 
-  // 2. Crear evento: el backend sigue recibiendo campos en español,
-  // pero al agregar el evento al calendario, lo mapeas a inglés
   const handleCreateEvent = async (form: {
     titulo: string;
     descripcion: string;
@@ -76,7 +77,7 @@ export default function CalendarioEventos() {
         tipo: form.tipo,
         inicio: form.inicio,
         fin: form.fin,
-        userId: 1, // reemplaza por el real
+        userId: 1,
       }),
     });
     if (!res.ok) throw new Error();
@@ -85,7 +86,7 @@ export default function CalendarioEventos() {
       ...events,
       {
         id: String(newEvent.id),
-        title: newEvent.titulo,         // OJO: mapeo aquí
+        title: newEvent.titulo,
         start: newEvent.inicio,
         end: newEvent.fin,
         description: newEvent.descripcion,
@@ -107,7 +108,6 @@ export default function CalendarioEventos() {
     ]);
   };
 
-  // 3. Render del evento con tooltip
   function renderEventContent(eventInfo: EventContentArg) {
     let icon = "";
     if (eventInfo.event.extendedProps.type === "reunion") {
@@ -120,11 +120,12 @@ export default function CalendarioEventos() {
     return (
       <div
         data-tip={
-          `<b>${icon}${eventInfo.event.title}</b><br/>` +   // Usa .title
+          `<b>${icon}${eventInfo.event.title}</b><br/>` +
           (eventInfo.event.extendedProps.description || "")
         }
         data-html={true}
-        className="cursor-pointer"
+        className="cursor-pointer max-w-[115px] overflow-hidden text-ellipsis whitespace-nowrap"
+        style={{ display: "flex", alignItems: "center" }}
       >
         <span className="font-semibold">
           {icon}
@@ -167,6 +168,10 @@ export default function CalendarioEventos() {
                 }}
                 events={events}
                 eventContent={renderEventContent}
+                eventClick={(info) => {
+                  setSelectedEvent(info.event);
+                  setDetailModalOpen(true);
+                }}
                 height="auto"
                 locales={[esLocale]}
                 locale="es"
@@ -188,7 +193,161 @@ export default function CalendarioEventos() {
           onClose={() => setModalOpen(false)}
           onCreate={handleCreateEvent}
         />
+        {detailModalOpen && selectedEvent && !editMode && (
+          <div className="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center">
+            <div className="bg-white p-6 rounded-xl w-full max-w-md shadow-xl border border-verdeSuave animate-fade-in-up relative">
+              <button
+                className="absolute top-2 right-3 text-gray-400 hover:text-red-500 text-xl"
+                onClick={() => setDetailModalOpen(false)}
+              >
+                ×
+              </button>
+              <h3 className="text-xl font-bold text-[#2C5959] mb-4 flex items-center gap-2">
+                <span>
+                  {selectedEvent.extendedProps?.type === "reunion"
+                    ? "📅"
+                    : selectedEvent.extendedProps?.type === "ciclo"
+                    ? "🔄"
+                    : "⭐"}
+                </span>
+                {selectedEvent.title}
+              </h3>
+              <div className="space-y-2">
+                <div>
+                  <span className="block text-xs font-bold text-gray-400">
+                    Descripción:
+                  </span>
+                  <span className="block text-base">
+                    {selectedEvent.extendedProps?.description ||
+                      "Sin descripción"}
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  <div>
+                    <span className="block text-xs font-bold text-gray-400">
+                      Inicio:
+                    </span>
+                    <span className="block text-base">
+                      {selectedEvent.start
+                        ? new Date(selectedEvent.start).toLocaleString("es-CO")
+                        : "-"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="block text-xs font-bold text-gray-400">
+                      Fin:
+                    </span>
+                    <span className="block text-base">
+                      {selectedEvent.end
+                        ? new Date(selectedEvent.end).toLocaleString("es-CO")
+                        : "-"}
+                    </span>
+                  </div>
+                </div>
+                <div>
+                  <span className="block text-xs font-bold text-gray-400">
+                    Tipo:
+                  </span>
+                  <span className="block text-base capitalize">
+                    {selectedEvent.extendedProps?.type || "-"}
+                  </span>
+                </div>
+              </div>
+              {/* BOTONES */}
+              <div className="flex justify-end gap-2 mt-6">
+                <button
+                  className="bg-verdeOscuro hover:bg-verdeClaro text-white px-2 rounded-md font-semibold"
+                  onClick={() => {
+                    setEditMode(true);
+                    setDetailModalOpen(false);
+                  }}
+                >
+                  Editar
+                </button>
+                <button
+                  className="bg-red-600 hover:bg-red-700 flex items-center gap-2 text-white px-2 rounded-md font-semibold transition-colors"
+                  onClick={() => {
+                    confirm(
+                      "¿Estás seguro que deseas ✖️ eliminar este evento? Esta acción no se puede deshacer.",
+                      async () => {
+                        await fetch(
+                          `http://localhost:3001/events/${selectedEvent.id}`,
+                          { method: "DELETE" }
+                        );
+                        setEvents(
+                          events.filter((e) => e.id !== selectedEvent.id)
+                        );
+                        setDetailModalOpen(false);
+                      }
+                    );
+                  }}
+                >
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        {editMode && selectedEvent && (
+          <CrearEventoModal
+            open={editMode}
+            onClose={() => {
+              setEditMode(false);
+              setSelectedEvent(null);
+            }}
+            onCreate={async (form) => {
+              const res = await fetch(
+                `http://localhost:3001/events/${selectedEvent.id}`,
+                {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(form),
+                }
+              );
+              if (!res.ok) throw new Error();
+              const updated = await res.json();
+              setEvents(
+                events.map((e) =>
+                  e.id === selectedEvent.id
+                    ? {
+                        ...e,
+                        title: updated.titulo,
+                        start: updated.inicio,
+                        end: updated.fin,
+                        description: updated.descripcion,
+                        type: updated.tipo,
+                        backgroundColor:
+                          updated.tipo === "reunion"
+                            ? "#33A691"
+                            : updated.tipo === "ciclo"
+                            ? "#B8D9C4"
+                            : "#2C5959",
+                        borderColor:
+                          updated.tipo === "reunion"
+                            ? "#33A691"
+                            : updated.tipo === "ciclo"
+                            ? "#B8D9C4"
+                            : "#2C5959",
+                        textColor: "#171717",
+                      }
+                    : e
+                )
+              );
+              setEditMode(false);
+              setSelectedEvent(null);
+            }}
+            initialData={{
+              titulo: selectedEvent.title as string,
+              descripcion: selectedEvent.extendedProps?.description,
+              tipo: selectedEvent.extendedProps?.type,
+              inicio: selectedEvent.start,
+              fin: selectedEvent.end,
+            }}
+            editMode={true}
+          />
+        )}
       </div>
+      <ConfirmModal />
     </div>
   );
 }
