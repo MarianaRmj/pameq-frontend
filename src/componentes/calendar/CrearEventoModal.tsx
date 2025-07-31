@@ -1,31 +1,70 @@
 import { useState } from "react";
+import { useEffect } from "react";
 
-interface CrearEventoModalProps {
+export type CrearEventoModalProps = {
   open: boolean;
   onClose: () => void;
-  onCreate: (data: {
+  onCreate: (form: {
     titulo: string;
     descripcion: string;
     tipo: string;
     inicio: string;
     fin: string;
   }) => Promise<void>;
-}
+  editMode?: boolean;
+  initialData?: {
+    titulo: string;
+    descripcion?: string;
+    tipo?: string;
+    inicio?: Date | string | null;
+    fin?: Date | string | null;
+  };
+};
 
 export function CrearEventoModal({
   open,
   onClose,
   onCreate,
+  initialData,
+  editMode,
 }: CrearEventoModalProps) {
   const [form, setForm] = useState({
     titulo: "",
     descripcion: "",
-    tipo: "",
+    tipo: "actividad",
     inicio: "",
     fin: "",
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  function toDatetimeLocal(dateStr: string | Date) {
+    const d = new Date(dateStr);
+    // Ajusta a tu zona horaria si lo necesitas
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    return d.toISOString().slice(0, 16);
+  }
+
+  useEffect(() => {
+    if (open && editMode && initialData) {
+      setForm({
+        titulo: initialData.titulo || "",
+        descripcion: initialData.descripcion || "",
+        tipo: initialData.tipo || "actividad",
+        inicio: initialData.inicio ? toDatetimeLocal(initialData.inicio) : "",
+        fin: initialData.fin ? toDatetimeLocal(initialData.fin) : "",
+      });
+    }
+    if (open && !editMode) {
+      setForm({
+        titulo: "",
+        descripcion: "",
+        tipo: "actividad",
+        inicio: "",
+        fin: "",
+      });
+    }
+  }, [open, editMode, initialData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,7 +82,7 @@ export function CrearEventoModal({
       setForm({
         titulo: "",
         descripcion: "",
-        tipo: "actividad",
+        tipo: "",
         inicio: "",
         fin: "",
       });
@@ -61,7 +100,7 @@ export function CrearEventoModal({
     <div className="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center">
       <div className="bg-white p-6 rounded-xl w-full max-w-md shadow-xl border border-verdeSuave animate-fade-in-up relative">
         <button
-          className="absolute top-2 right-3 text-gray-400 hover:text-red-500 text-xl"
+          className="absolute top-6 right-10 text-gray-400 hover:text-red-500 text-3xl"
           onClick={onClose}
         >
           ×
