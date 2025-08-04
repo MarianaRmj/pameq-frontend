@@ -6,23 +6,51 @@ import Box from "@mui/material/Box";
 import ScheduleTable, {
   ScheduleTask,
 } from "@/componentes/schedule/ScheduleTable";
-import GanttChart, { GanttTask } from "@/componentes/schedule/GanttChart";
+import ModernGanttChart from "@/componentes/schedule/ModernGanttChart";
+import { Task } from "gantt-task-react";
 
-// Función utilitaria para transformar tareas a formato Gantt
-function mapToGantt(tasks: ScheduleTask[]): GanttTask[] {
-  console.log("Tareas para Gantt:", tasks);
-  const mapeadas = tasks
-    .filter((t) => t.fecha_comienzo && t.fecha_fin)
-    .map((t) => ({
-      id: t.id,
-      name: t.nombre_tarea,
-      start: t.fecha_comienzo,
-      end: t.fecha_fin,
-      progress: t.progreso || 0,
-      dependencies: t.predecesoras || "",
-    }));
-  console.log("Tareas mapeadas Gantt:", mapeadas);
-  return mapeadas;
+// ---- COLORES POR ESTADO ----
+function getBarColorByEstado(estado?: string) {
+  switch (estado) {
+    case "Pendiente":
+      return "#F2C14E"; // O usa "#F2C14E" o cualquier amarillo de tu marca
+    case "En progreso":
+      return "#33A691"; // verdeClaro
+    case "Finalizado":
+      return "#2C5959"; // verdeOscuro o "#7fca64" si quieres diferenciarlo
+    default:
+      return "#B8D9C4"; // verdeSuave
+  }
+}
+
+// ---- MAPEO DE DATOS ----
+export function mapToGanttTasks(tasks: ScheduleTask[]): Task[] {
+  return tasks.map((t) => ({
+    id: String(t.id),
+    type: "task",
+    name: t.nombre_tarea,
+    start: new Date(t.fecha_comienzo),
+    end: new Date(t.fecha_fin),
+    progress: t.progreso ?? 0,
+    dependencies: t.predecesoras
+      ? t.predecesoras
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : [],
+    // Estos campos los pasamos al tooltip:
+    estado: t.estado,
+    responsable: t.responsable,
+    styles: {
+      progressColor: getBarColorByEstado(t.estado),
+      progressSelectedColor: "#2C5959",
+      backgroundColor: getBarColorByEstado(t.estado),
+      backgroundSelectedColor: "#2C5959",
+    },
+    hideChildren: false,
+    isDisabled: false,
+    displayOrder: t.id,
+  }));
 }
 
 export default function SchedulePage() {
@@ -55,8 +83,8 @@ export default function SchedulePage() {
     },
     {
       id: 3,
-      nombre_tarea: "Reunion de prueba",
-      descripcion: "Reunion grupo de trabajo",
+      nombre_tarea: "Reunión de prueba",
+      descripcion: "Reunión grupo de trabajo",
       fecha_comienzo: "2025-08-22",
       fecha_fin: "2025-08-29",
       duracion: 6,
@@ -229,7 +257,6 @@ export default function SchedulePage() {
           />
         </Tabs>
       </Box>
-
       {tab === 0 && (
         <Box>
           <ScheduleTable tasks={tasks} setTasks={setTasks} />
@@ -241,7 +268,7 @@ export default function SchedulePage() {
             Arrastra las barras para ajustar fechas o consulta visualmente el
             progreso de las actividades.
           </div>
-          <GanttChart tasks={mapToGantt(tasks)} />
+          <ModernGanttChart tasks={mapToGanttTasks(tasks)} />
         </Box>
       )}
     </div>
