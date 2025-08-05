@@ -58,7 +58,6 @@ export default function SchedulePage() {
     {
       id: 1,
       nombre_tarea: "Tarea inicial",
-      descripcion: "Descripción inicial",
       fecha_comienzo: "2025-08-01",
       fecha_fin: "2025-08-05",
       duracion: 5,
@@ -67,11 +66,11 @@ export default function SchedulePage() {
       progreso: 18,
       observaciones: "",
       predecesoras: "",
+      cicloId: 1,
     },
     {
       id: 2,
       nombre_tarea: "Actividad de prueba",
-      descripcion: "Actividad inicial",
       fecha_comienzo: "2025-08-15",
       fecha_fin: "2025-08-20",
       duracion: 10,
@@ -80,11 +79,11 @@ export default function SchedulePage() {
       progreso: 50,
       observaciones: "",
       predecesoras: "1",
+      cicloId: 1,
     },
     {
       id: 3,
       nombre_tarea: "Reunión de prueba",
-      descripcion: "Reunión grupo de trabajo",
       fecha_comienzo: "2025-08-22",
       fecha_fin: "2025-08-29",
       duracion: 6,
@@ -93,11 +92,11 @@ export default function SchedulePage() {
       progreso: 47,
       observaciones: "",
       predecesoras: "",
+      cicloId: 1,
     },
     {
       id: 4,
       nombre_tarea: "Diseño de prototipo",
-      descripcion: "Elaboración del prototipo inicial",
       fecha_comienzo: "2025-08-06",
       fecha_fin: "2025-08-12",
       duracion: 7,
@@ -106,11 +105,11 @@ export default function SchedulePage() {
       progreso: 60,
       observaciones: "",
       predecesoras: "1",
+      cicloId: 1,
     },
     {
       id: 5,
       nombre_tarea: "Validación técnica",
-      descripcion: "Revisión de requerimientos técnicos",
       fecha_comienzo: "2025-08-13",
       fecha_fin: "2025-08-15",
       duracion: 3,
@@ -119,11 +118,11 @@ export default function SchedulePage() {
       progreso: 35,
       observaciones: "",
       predecesoras: "4",
+      cicloId: 1,
     },
     {
       id: 6,
       nombre_tarea: "Pruebas piloto",
-      descripcion: "Ejecución de pruebas iniciales",
       fecha_comienzo: "2025-08-16",
       fecha_fin: "2025-08-19",
       duracion: 4,
@@ -132,11 +131,11 @@ export default function SchedulePage() {
       progreso: 13,
       observaciones: "",
       predecesoras: "5",
+      cicloId: 1,
     },
     {
       id: 7,
       nombre_tarea: "Capacitación equipo",
-      descripcion: "Formación para el equipo de trabajo",
       fecha_comienzo: "2025-08-20",
       fecha_fin: "2025-08-22",
       duracion: 3,
@@ -145,11 +144,11 @@ export default function SchedulePage() {
       progreso: 20,
       observaciones: "",
       predecesoras: "6",
+      cicloId: 1,
     },
     {
       id: 8,
       nombre_tarea: "Implementación inicial",
-      descripcion: "Despliegue de la solución",
       fecha_comienzo: "2025-08-23",
       fecha_fin: "2025-08-27",
       duracion: 5,
@@ -158,11 +157,11 @@ export default function SchedulePage() {
       progreso: 5,
       observaciones: "",
       predecesoras: "7",
+      cicloId: 1,
     },
     {
       id: 9,
       nombre_tarea: "Evaluación de resultados",
-      descripcion: "Análisis de los datos obtenidos",
       fecha_comienzo: "2025-08-28",
       fecha_fin: "2025-08-30",
       duracion: 3,
@@ -171,11 +170,11 @@ export default function SchedulePage() {
       progreso: 0,
       observaciones: "",
       predecesoras: "8",
+      cicloId: 1,
     },
     {
       id: 10,
       nombre_tarea: "Ajustes finales",
-      descripcion: "Corrección de observaciones y mejoras",
       fecha_comienzo: "2025-08-31",
       fecha_fin: "2025-09-03",
       duracion: 4,
@@ -184,11 +183,11 @@ export default function SchedulePage() {
       progreso: 0,
       observaciones: "",
       predecesoras: "9",
+      cicloId: 1,
     },
     {
       id: 11,
       nombre_tarea: "Entrega al cliente",
-      descripcion: "Presentación formal del resultado",
       fecha_comienzo: "2025-09-04",
       fecha_fin: "2025-09-05",
       duracion: 2,
@@ -197,11 +196,11 @@ export default function SchedulePage() {
       progreso: 0,
       observaciones: "",
       predecesoras: "10",
+      cicloId: 1,
     },
     {
       id: 12,
       nombre_tarea: "Soporte post-entrega",
-      descripcion: "Atención a incidencias tras la entrega",
       fecha_comienzo: "2025-09-06",
       fecha_fin: "2025-09-12",
       duracion: 7,
@@ -210,11 +209,11 @@ export default function SchedulePage() {
       progreso: 0,
       observaciones: "",
       predecesoras: "11",
+      cicloId: 1,
     },
     {
       id: 13,
       nombre_tarea: "Cierre de proyecto",
-      descripcion: "Documentación y cierre administrativo",
       fecha_comienzo: "2025-09-13",
       fecha_fin: "2025-09-15",
       duracion: 3,
@@ -223,10 +222,12 @@ export default function SchedulePage() {
       progreso: 0,
       observaciones: "",
       predecesoras: "12",
+      cicloId: 1,
     },
   ]);
 
   const [tab, setTab] = useState(0);
+  const [cicloId] = useState<number>(1); // valor por defecto
 
   return (
     <div className="bg-white shadow rounded-xl p-6 max-w-7xl mx-auto">
@@ -259,16 +260,15 @@ export default function SchedulePage() {
       </Box>
       {tab === 0 && (
         <Box>
-          <ScheduleTable tasks={tasks} setTasks={setTasks} />
+          <ScheduleTable tasks={tasks} setTasks={setTasks} cicloId={cicloId} />
         </Box>
       )}
       {tab === 1 && (
         <Box>
-          <div className="text-sm text-gray-500 mb-2">
-            Arrastra las barras para ajustar fechas o consulta visualmente el
-            progreso de las actividades.
-          </div>
-          <ModernGanttChart tasks={mapToGanttTasks(tasks)} />
+          <ModernGanttChart
+            tasks={mapToGanttTasks(tasks)}
+            cicloId={String(cicloId)}
+          />
         </Box>
       )}
     </div>

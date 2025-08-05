@@ -27,7 +27,6 @@ import dayjs from "dayjs";
 export interface ScheduleTask {
   id: number;
   nombre_tarea: string;
-  descripcion?: string;
   fecha_comienzo: string;
   fecha_fin: string;
   duracion?: number;
@@ -36,15 +35,23 @@ export interface ScheduleTask {
   progreso?: number;
   observaciones?: string;
   predecesoras?: string;
-  isNew?: boolean;
+  cicloId: number;
+  sedeId?: number;
+  institucionId?: number;
+  isNew?: boolean; // Solo para frontend (no se envía al back)
 }
 
 interface ScheduleTableProps {
   tasks: ScheduleTask[];
   setTasks: React.Dispatch<React.SetStateAction<ScheduleTask[]>>;
+  cicloId: number;
 }
 
-export default function ScheduleTable({ tasks, setTasks }: ScheduleTableProps) {
+export default function ScheduleTable({
+  tasks,
+  setTasks,
+  cicloId,
+}: ScheduleTableProps) {
   const [rowModesModel, setRowModesModel] = React.useState<GridRowModesModel>(
     {}
   );
@@ -59,15 +66,15 @@ export default function ScheduleTable({ tasks, setTasks }: ScheduleTableProps) {
       {
         id,
         nombre_tarea: "",
-        descripcion: "",
         fecha_comienzo: today,
         fecha_fin: fin,
-        duracion: 2,
+        duracion: 0,
         estado: "",
         responsable: "",
         progreso: 0,
         observaciones: "",
         predecesoras: "",
+        cicloId,
         isNew: true,
       },
     ]);
@@ -101,12 +108,28 @@ export default function ScheduleTable({ tasks, setTasks }: ScheduleTableProps) {
     setTasks((oldRows) => oldRows.filter((row) => row.id !== id));
   };
 
-  const processRowUpdate = (newRow: GridRowModel) => {
-    const updatedRow = { ...newRow, isNew: false } as ScheduleTask;
-    setTasks((oldRows) =>
-      oldRows.map((row) => (row.id === updatedRow.id ? updatedRow : row))
-    );
-    return updatedRow;
+  const processRowUpdate = async (newRow: GridRowModel) => {
+    // Calcula la diferencia de días solo si ambas fechas existen
+    let duracion = newRow.duracion;
+    if (newRow.fecha_comienzo && newRow.fecha_fin) {
+      const inicio = dayjs(newRow.fecha_comienzo);
+      const fin = dayjs(newRow.fecha_fin);
+      duracion = fin.diff(inicio, "day") + 1; // +1 para incluir ambos días
+    }
+    const rowWithDuration = { ...newRow, duracion };
+
+    try {
+      const savedRow = await guardarTarea(rowWithDuration as ScheduleTask);
+      setTasks((oldRows) =>
+        oldRows.map((row) =>
+          row.id === newRow.id ? { ...savedRow, isNew: false } : row
+        )
+      );
+      return { ...savedRow, isNew: false };
+    } catch {
+      alert("Error guardando la tarea. Intenta de nuevo.");
+      return newRow;
+    }
   };
 
   // Editor de fechas
@@ -150,38 +173,32 @@ export default function ScheduleTable({ tasks, setTasks }: ScheduleTableProps) {
   };
 
   const columns: GridColDef[] = [
-    { field: "nombre_tarea", headerName: "Actividad", flex: 1, editable: true },
-    {
-      field: "descripcion",
-      headerName: "Descripción",
-      flex: 1,
-      editable: true,
-    },
+    { field: "nombre_tarea", headerName: "Actividad", width: 170, editable: true },
     {
       field: "fecha_comienzo",
       headerName: "Inicio",
-      width: 120,
+      width: 100,
       editable: true,
       renderEditCell: (params) => <DateEditCell {...params} />,
     },
     {
       field: "fecha_fin",
       headerName: "Fin",
-      width: 120,
+      width: 100,
       editable: true,
       renderEditCell: (params) => <DateEditCell {...params} />,
     },
     {
       field: "duracion",
       headerName: "Duración",
-      width: 110,
-      editable: true,
+      width: 100,
+      editable: false,
       type: "number",
     },
     {
       field: "estado",
       headerName: "Estado",
-      width: 130,
+      width: 110,
       editable: true,
       renderEditCell: (params) => <EstadoEditCell {...params} />,
     },
@@ -197,6 +214,18 @@ export default function ScheduleTable({ tasks, setTasks }: ScheduleTableProps) {
       width: 120,
       editable: true,
       type: "number",
+    },
+    {
+      field: "predecesoras",
+      headerName: "Predecesoras",
+      width: 100,
+      editable: true,
+    },
+    {
+      field: "observaciones",
+      headerName: "Observaciones",
+      flex: 1,
+      editable: true,
     },
     {
       field: "acciones",
@@ -243,6 +272,60 @@ export default function ScheduleTable({ tasks, setTasks }: ScheduleTableProps) {
     setMounted(true);
   }, []);
 
+  const guardarTarea = async (row: ScheduleTask) => {
+    // Solo los campos que tu backend acepta:
+    const {
+      id,
+      nombre_tarea,
+      fecha_comienzo,
+      fecha_fin,
+      duracion,
+      estado,
+      responsable,
+      progreso,
+      observaciones,
+      predecesoras,
+      cicloId,
+      sedeId,
+      institucionId,
+    } = row;
+
+    const rowToSend = {
+      nombre_tarea,
+      fecha_comienzo,
+      fecha_fin,
+      duracion,
+      estado,
+      responsable,
+      progreso,
+      observaciones,
+      predecesoras,
+      cicloId,
+      sedeId,
+      institucionId,
+    };
+
+    if (row.isNew) {
+      const resp = await fetch("http://localhost:3001/schedule-tasks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(rowToSend),
+      });
+      if (!resp.ok) throw new Error("Error al guardar tarea");
+      const saved = await resp.json();
+      return { ...saved, isNew: false };
+    } else {
+      const resp = await fetch(`http://localhost:3001/schedule-tasks/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(rowToSend),
+      });
+      if (!resp.ok) throw new Error("Error al actualizar tarea");
+      const updated = await resp.json();
+      return updated;
+    }
+  };
+
   return (
     <div style={{ width: "100%" }}>
       {mounted && (
@@ -262,9 +345,10 @@ export default function ScheduleTable({ tasks, setTasks }: ScheduleTableProps) {
               pageSizeOptions={[5, 10, 20]}
               localeText={esES.components.MuiDataGrid.defaultProps.localeText}
               sx={{
-                borderRadius: "1.1rem",
-                fontSize: 16,
-                color: "#000",
+                borderRadius: "1rem",
+                fontSize: 14,
+                color: "#ffff",
+                padding: "0.5rem",
                 ".MuiDataGrid-columnHeaders": {
                   backgroundColor: "#2C5959",
                 },
