@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import * as React from "react";
 import {
@@ -23,11 +24,11 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { TextField, MenuItem } from "@mui/material";
 import dayjs from "dayjs";
 
-// Interfaz para la tabla y para el SchedulePage
+// Interfaz para la tabla
 export interface ScheduleTask {
   id: number;
   nombre_tarea: string;
-  fecha_comienzo: string;
+  fecha_comienzo: string; // "YYYY-MM-DD"
   fecha_fin: string;
   duracion?: number;
   estado?: string;
@@ -38,13 +39,32 @@ export interface ScheduleTask {
   cicloId: number;
   sedeId?: number;
   institucionId?: number;
-  isNew?: boolean; // Solo para frontend (no se envía al back)
+  parentId?: number | null | string;
+  isNew?: boolean; // (solo frontend)
 }
 
 interface ScheduleTableProps {
   tasks: ScheduleTask[];
   setTasks: React.Dispatch<React.SetStateAction<ScheduleTask[]>>;
   cicloId: number;
+}
+
+// Función auxiliar para sangría visual (profundidad de jerarquía)
+function getNivelTarea(row: ScheduleTask, allTasks: ScheduleTask[]): number {
+  let nivel = 0;
+  let actual = row;
+  while (
+    actual.parentId !== undefined &&
+    actual.parentId !== null &&
+    actual.parentId !== "" &&
+    actual.parentId !== "null"
+  ) {
+    const parent = allTasks.find((t) => t.id === Number(actual.parentId));
+    if (!parent) break;
+    nivel++;
+    actual = parent;
+  }
+  return nivel;
 }
 
 export default function ScheduleTable({
@@ -58,16 +78,14 @@ export default function ScheduleTable({
 
   const handleAddClick = () => {
     const id = tasks.length ? Math.max(...tasks.map((r) => r.id)) + 1 : 1;
-    const today = dayjs().format("YYYY-MM-DD");
-    const fin = dayjs().add(2, "day").format("YYYY-MM-DD");
 
     setTasks((oldRows) => [
       ...oldRows,
       {
         id,
         nombre_tarea: "",
-        fecha_comienzo: today,
-        fecha_fin: fin,
+        fecha_comienzo: "",
+        fecha_fin: "",
         duracion: 0,
         estado: "",
         responsable: "",
@@ -76,6 +94,7 @@ export default function ScheduleTable({
         predecesoras: "",
         cicloId,
         isNew: true,
+        parentId: undefined,
       },
     ]);
     setRowModesModel((oldModel) => ({
@@ -109,22 +128,37 @@ export default function ScheduleTable({
   };
 
   const processRowUpdate = async (newRow: GridRowModel) => {
-    // Calcula la diferencia de días solo si ambas fechas existen
     let duracion = newRow.duracion;
     if (newRow.fecha_comienzo && newRow.fecha_fin) {
       const inicio = dayjs(newRow.fecha_comienzo);
       const fin = dayjs(newRow.fecha_fin);
-      duracion = fin.diff(inicio, "day") + 1; // +1 para incluir ambos días
+      duracion = fin.diff(inicio, "day") + 1;
     }
-    const rowWithDuration = { ...newRow, duracion };
+
+    const parentIdNormalized =
+      newRow.parentId === "" ||
+      newRow.parentId === "null" ||
+      newRow.parentId === null
+        ? null
+        : Number(newRow.parentId);
+
+    const rowWithDuration = {
+      ...newRow,
+      duracion,
+      cicloId,
+      parentId: Number.isNaN(parentIdNormalized) ? null : parentIdNormalized,
+    };
 
     try {
       const savedRow = await guardarTarea(rowWithDuration as ScheduleTask);
       setTasks((oldRows) =>
         oldRows.map((row) =>
-          row.id === newRow.id ? { ...savedRow, isNew: false } : row
+          row.id === newRow.id
+            ? { ...savedRow, id: Number(savedRow.id), isNew: false }
+            : row
         )
       );
+
       return { ...savedRow, isNew: false };
     } catch {
       alert("Error guardando la tarea. Intenta de nuevo.");
@@ -155,8 +189,13 @@ export default function ScheduleTable({
   const EstadoEditCell = (props: GridRenderEditCellParams) => {
     const { id, field, value, api } = props;
     const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-      api.setEditCellValue({ id, field, value: event.target.value });
+      api.setEditCellValue({
+        id,
+        field,
+        value: event.target.value || "",
+      });
     };
+
     return (
       <TextField
         select
@@ -172,8 +211,83 @@ export default function ScheduleTable({
     );
   };
 
+  // Opciones para el campo padre (excluye la fila actual para evitar ciclos)
+  const parentOptions = tasks.map((t) => ({
+    value: t.id,
+    label: t.nombre_tarea,
+  }));
+
+  // Editor de padre
+  const ParentEditCell = (props: GridRenderEditCellParams) => {
+    const { id, field, value, api } = props;
+    const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+      const v = event.target.value;
+      api.setEditCellValue({
+        id,
+        field,
+        value: v === "" ? null : Number(v), // <-- null para limpiar
+      });
+    };
+    // Excluye la fila actual de las opciones para evitar que una tarea sea su propio padre
+    const filteredParentOptions = parentOptions.filter(
+      (opt) => opt.value !== id
+    );
+
+    return (
+      <TextField
+        select
+        size="small"
+        value={value ?? ""}
+        onChange={handleChange}
+        fullWidth
+      >
+        <MenuItem value="">Ninguno</MenuItem>
+        {filteredParentOptions.map((opt) => (
+          <MenuItem key={opt.value} value={opt.value}>
+            {opt.label}
+          </MenuItem>
+        ))}
+      </TextField>
+    );
+  };
+  // Columna padre formateada
+  const parentValueFormatter = (params: any) => {
+    const v = params?.value;
+    if (v === undefined || v === null || v === "" || v === "null") return "";
+    const padre = tasks.find((t) => t.id === Number(v));
+    return padre ? padre.nombre_tarea : "";
+  };
+
   const columns: GridColDef[] = [
-    { field: "nombre_tarea", headerName: "Actividad", width: 170, editable: true },
+    {
+      field: "id",
+      headerName: "ID",
+      width: 60,
+      editable: false,
+      type: "number",
+      align: "center",
+      headerAlign: "center",
+    },
+    {
+      field: "nombre_tarea",
+      headerName: "Actividad",
+      width: 170,
+      editable: true,
+      renderCell: (params) => {
+        // params.row siempre refleja el valor actual
+        const nivel = getNivelTarea(params.row, tasks);
+        return <span style={{ paddingLeft: nivel * 18 }}>{params.value}</span>;
+      },
+    },
+
+    {
+      field: "parentId",
+      headerName: "Madre",
+      width: 110,
+      editable: true,
+      renderEditCell: (params) => <ParentEditCell {...params} />,
+      valueFormatter: parentValueFormatter,
+    },
     {
       field: "fecha_comienzo",
       headerName: "Inicio",
@@ -272,6 +386,7 @@ export default function ScheduleTable({
     setMounted(true);
   }, []);
 
+  // TODO: agrega el campo parentId en el fetch/save si usas backend
   const guardarTarea = async (row: ScheduleTask) => {
     // Solo los campos que tu backend acepta:
     const {
@@ -288,6 +403,7 @@ export default function ScheduleTable({
       cicloId,
       sedeId,
       institucionId,
+      parentId,
     } = row;
 
     const rowToSend = {
@@ -303,6 +419,9 @@ export default function ScheduleTable({
       cicloId,
       sedeId,
       institucionId,
+      parentId: (parentId === undefined || parentId === ""
+        ? null
+        : parentId) as number | null,
     };
 
     if (row.isNew) {
@@ -341,7 +460,7 @@ export default function ScheduleTable({
               onRowEditStart={handleRowEditStart}
               onRowEditStop={handleRowEditStop}
               processRowUpdate={processRowUpdate}
-              getRowId={(row) => row.id}
+              getRowId={(row) => Number(row.id)}
               pageSizeOptions={[5, 10, 20]}
               localeText={esES.components.MuiDataGrid.defaultProps.localeText}
               sx={{
@@ -376,7 +495,7 @@ export default function ScheduleTable({
                 borderRadius: "6px",
               }}
             >
-              + Nueva Fila
+              + Nueva Actividad
             </button>
           </>
         </LocalizationProvider>
