@@ -1,233 +1,98 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 import Box from "@mui/material/Box";
 import ScheduleTable, {
   ScheduleTask,
-} from "@/componentes/schedule/ScheduleTable";
-import ModernGanttChart from "@/componentes/schedule/ModernGanttChart";
+} from "@/components/schedule/ScheduleTable";
+import ModernGanttChart from "@/components/schedule/ModernGanttChart";
 import { Task } from "gantt-task-react";
 
-// ---- COLORES POR ESTADO ----
-function getBarColorByEstado(estado?: string) {
-  switch (estado) {
-    case "Pendiente":
-      return "#F2C14E"; // O usa "#F2C14E" o cualquier amarillo de tu marca
-    case "En progreso":
-      return "#33A691"; // verdeClaro
-    case "Finalizado":
-      return "#2C5959"; // verdeOscuro o "#7fca64" si quieres diferenciarlo
-    default:
-      return "#B8D9C4"; // verdeSuave
-  }
+// Importa tu función fetch
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
+async function fetchTasksByCiclo(cicloId: number): Promise<ScheduleTask[]> {
+  const res = await fetch(`${BASE_URL}/schedule-tasks?cicloId=${cicloId}`);
+  if (!res.ok) throw new Error("Error cargando tareas");
+  return res.json();
 }
 
-// ---- MAPEO DE DATOS ----
+// ---- COLORES POR ESTADO ----
+function getBarStylesByEstado(estado?: string) {
+  const e = (estado || "").toLowerCase(); // normaliza
+
+  if (e === "finalizado") {
+    return {
+      backgroundColor: "#2C5959",
+      backgroundSelectedColor: "#1E4545",
+      progressColor: "#B8D9C4",
+      progressSelectedColor: "#A2CDB3",
+    };
+  }
+  if (e === "en progreso" || e === "en_curso") {
+    return {
+      backgroundColor: "#33A691",
+      backgroundSelectedColor: "#2A8C7A",
+      progressColor: "#16796B",
+      progressSelectedColor: "#126559",
+    };
+  }
+  return {
+    backgroundColor: "#F2C14E",
+    backgroundSelectedColor: "#D9A83C",
+    progressColor: "#8F6A1F",
+    progressSelectedColor: "#7A591A",
+  };
+}
+
+// ---- MAPEO DE DATOS (reemplaza tu función actual) ----
 export function mapToGanttTasks(tasks: ScheduleTask[]): Task[] {
-  return tasks.map((t) => ({
-    id: String(t.id),
-    type: "task",
-    name: t.nombre_tarea,
-    start: new Date(t.fecha_comienzo),
-    end: new Date(t.fecha_fin),
-    progress: t.progreso ?? 0,
-    dependencies: t.predecesoras
-      ? t.predecesoras
-          .split(",")
-          .map((s) => s.trim())
-          .filter(Boolean)
-      : [],
-    // Estos campos los pasamos al tooltip:
-    estado: t.estado,
-    responsable: t.responsable,
-    styles: {
-      progressColor: getBarColorByEstado(t.estado),
-      progressSelectedColor: "#2C5959",
-      backgroundColor: getBarColorByEstado(t.estado),
-      backgroundSelectedColor: "#2C5959",
-    },
-    hideChildren: false,
-    isDisabled: false,
-    displayOrder: t.id,
-  }));
+  return tasks
+    .filter((t) => t.nombre_tarea && t.fecha_comienzo && t.fecha_fin)
+    .map((t) => {
+      const deps =
+        typeof t.predecesoras === "string"
+          ? t.predecesoras
+              .split(",")
+              .map((s) => s.trim())
+              .map((s) => s.match(/^\d+/)?.[0])
+              .filter(Boolean)
+          : [];
+
+      return {
+        id: String(t.id),
+        type: t.parentId ? "task" : "project",
+        name: t.nombre_tarea,
+        start: new Date(t.fecha_comienzo),
+        end: new Date(t.fecha_fin),
+        progress: t.progreso ?? 0,
+        dependencies: deps as string[],
+        project: t.parentId ? String(t.parentId) : undefined,
+        estado: t.estado,
+        responsable: t.responsable,
+        styles: getBarStylesByEstado(t.estado), // <-- solo keys válidas
+        hideChildren: false,
+        isDisabled: false,
+        displayOrder: t.id,
+      } as Task;
+    });
 }
 
 export default function SchedulePage() {
-  const [tasks, setTasks] = useState<ScheduleTask[]>([
-    {
-      id: 1,
-      nombre_tarea: "Tarea inicial",
-      fecha_comienzo: "2025-08-01",
-      fecha_fin: "2025-08-05",
-      duracion: 5,
-      estado: "Pendiente",
-      responsable: "Juan Perez",
-      progreso: 18,
-      observaciones: "",
-      predecesoras: "",
-      cicloId: 1,
-    },
-    {
-      id: 2,
-      nombre_tarea: "Actividad de prueba",
-      fecha_comienzo: "2025-08-15",
-      fecha_fin: "2025-08-20",
-      duracion: 10,
-      estado: "En progreso",
-      responsable: "Mariana Perez",
-      progreso: 50,
-      observaciones: "",
-      predecesoras: "1",
-      cicloId: 1,
-    },
-    {
-      id: 3,
-      nombre_tarea: "Reunión de prueba",
-      fecha_comienzo: "2025-08-22",
-      fecha_fin: "2025-08-29",
-      duracion: 6,
-      estado: "En progreso",
-      responsable: "Melisa Perez",
-      progreso: 47,
-      observaciones: "",
-      predecesoras: "",
-      cicloId: 1,
-    },
-    {
-      id: 4,
-      nombre_tarea: "Diseño de prototipo",
-      fecha_comienzo: "2025-08-06",
-      fecha_fin: "2025-08-12",
-      duracion: 7,
-      estado: "Pendiente",
-      responsable: "Carlos Díaz",
-      progreso: 60,
-      observaciones: "",
-      predecesoras: "1",
-      cicloId: 1,
-    },
-    {
-      id: 5,
-      nombre_tarea: "Validación técnica",
-      fecha_comienzo: "2025-08-13",
-      fecha_fin: "2025-08-15",
-      duracion: 3,
-      estado: "Pendiente",
-      responsable: "Laura Gómez",
-      progreso: 35,
-      observaciones: "",
-      predecesoras: "4",
-      cicloId: 1,
-    },
-    {
-      id: 6,
-      nombre_tarea: "Pruebas piloto",
-      fecha_comienzo: "2025-08-16",
-      fecha_fin: "2025-08-19",
-      duracion: 4,
-      estado: "Pendiente",
-      responsable: "Santiago López",
-      progreso: 13,
-      observaciones: "",
-      predecesoras: "5",
-      cicloId: 1,
-    },
-    {
-      id: 7,
-      nombre_tarea: "Capacitación equipo",
-      fecha_comienzo: "2025-08-20",
-      fecha_fin: "2025-08-22",
-      duracion: 3,
-      estado: "Pendiente",
-      responsable: "Diana Salazar",
-      progreso: 20,
-      observaciones: "",
-      predecesoras: "6",
-      cicloId: 1,
-    },
-    {
-      id: 8,
-      nombre_tarea: "Implementación inicial",
-      fecha_comienzo: "2025-08-23",
-      fecha_fin: "2025-08-27",
-      duracion: 5,
-      estado: "Pendiente",
-      responsable: "Miguel Torres",
-      progreso: 5,
-      observaciones: "",
-      predecesoras: "7",
-      cicloId: 1,
-    },
-    {
-      id: 9,
-      nombre_tarea: "Evaluación de resultados",
-      fecha_comienzo: "2025-08-28",
-      fecha_fin: "2025-08-30",
-      duracion: 3,
-      estado: "Pendiente",
-      responsable: "Andrea Castro",
-      progreso: 0,
-      observaciones: "",
-      predecesoras: "8",
-      cicloId: 1,
-    },
-    {
-      id: 10,
-      nombre_tarea: "Ajustes finales",
-      fecha_comienzo: "2025-08-31",
-      fecha_fin: "2025-09-03",
-      duracion: 4,
-      estado: "Pendiente",
-      responsable: "Valentina Ruiz",
-      progreso: 0,
-      observaciones: "",
-      predecesoras: "9",
-      cicloId: 1,
-    },
-    {
-      id: 11,
-      nombre_tarea: "Entrega al cliente",
-      fecha_comienzo: "2025-09-04",
-      fecha_fin: "2025-09-05",
-      duracion: 2,
-      estado: "Pendiente",
-      responsable: "Oscar Molina",
-      progreso: 0,
-      observaciones: "",
-      predecesoras: "10",
-      cicloId: 1,
-    },
-    {
-      id: 12,
-      nombre_tarea: "Soporte post-entrega",
-      fecha_comienzo: "2025-09-06",
-      fecha_fin: "2025-09-12",
-      duracion: 7,
-      estado: "Pendiente",
-      responsable: "Juliana Torres",
-      progreso: 0,
-      observaciones: "",
-      predecesoras: "11",
-      cicloId: 1,
-    },
-    {
-      id: 13,
-      nombre_tarea: "Cierre de proyecto",
-      fecha_comienzo: "2025-09-13",
-      fecha_fin: "2025-09-15",
-      duracion: 3,
-      estado: "Pendiente",
-      responsable: "Javier Herrera",
-      progreso: 0,
-      observaciones: "",
-      predecesoras: "12",
-      cicloId: 1,
-    },
-  ]);
-
+  const [tasks, setTasks] = useState<ScheduleTask[]>([]);
   const [tab, setTab] = useState(0);
-  const [cicloId] = useState<number>(1); // valor por defecto
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [cicloId] = useState<number>(1); // Solo una vez!
+
+  useEffect(() => {
+    setLoading(true);
+    fetchTasksByCiclo(cicloId)
+      .then(setTasks)
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
+  }, [cicloId]);
 
   return (
     <div className="bg-white shadow rounded-xl p-6 max-w-7xl mx-auto">
@@ -271,6 +136,8 @@ export default function SchedulePage() {
           />
         </Box>
       )}
+      {loading && <div className="text-center mt-4">Cargando tareas...</div>}
+      {error && <div className="text-center mt-4 text-red-600">{error}</div>}
     </div>
   );
 }

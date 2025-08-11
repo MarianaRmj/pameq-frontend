@@ -1,6 +1,6 @@
 "use client";
 
-import EditarInstitucion from "@/componentes/institutions/EditarInstitucion";
+import EditarInstitucion from "@/components/institutions/EditarInstitucion";
 
 export default function ParameterizationPage() {
   return (

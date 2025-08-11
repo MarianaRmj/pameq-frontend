@@ -1,4 +1,4 @@
-import CalendarioEventos from "@/componentes/calendar/CalendarioEventos";
+import CalendarioEventos from "@/components/calendar/CalendarioEventos";
 
 export default function CalendarioPage() {
   return (

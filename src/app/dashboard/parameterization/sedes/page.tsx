@@ -1,4 +1,4 @@
-import { SedesTable } from "@/componentes/sedes/SedesTable";
+import { SedesTable } from "@/components/sedes/SedesTable";
 
 export default function SchedulePage() {
   return (
