@@ -8,6 +8,7 @@ import ScheduleTable, {
 } from "@/components/schedule/ScheduleTable";
 import ModernGanttChart from "@/components/schedule/ModernGanttChart";
 import { Task } from "gantt-task-react";
+import dayjs from "dayjs";
 
 // Importa tu función fetch
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
@@ -19,10 +20,16 @@ async function fetchTasksByCiclo(cicloId: number): Promise<ScheduleTask[]> {
 }
 
 // ---- COLORES POR ESTADO ----
-function getBarStylesByEstado(estado?: string) {
-  const e = (estado || "").toLowerCase(); // normaliza
+// Cambia el umbral si quieres (en días)
+const WARNING_DAYS = 3;
 
-  if (e === "finalizado") {
+// Solo keys que acepta gantt-task-react
+function getBarStylesByEstado(estado?: string, fechaFin?: string) {
+  const st = (estado ?? "").toLowerCase().replace("_", " "); // "en_curso" -> "en curso"
+  const end = fechaFin ? dayjs(fechaFin) : null;
+
+  // 1) Completadas -> VERDE
+  if (st === "finalizado" || st === "finalizada" || st === "finalizado/a") {
     return {
       backgroundColor: "#2C5959",
       backgroundSelectedColor: "#1E4545",
@@ -30,7 +37,34 @@ function getBarStylesByEstado(estado?: string) {
       progressSelectedColor: "#A2CDB3",
     };
   }
-  if (e === "en progreso" || e === "en_curso") {
+
+  // 2) Fechas (si hay fecha_fin)
+  if (end) {
+    const daysLeft = end.diff(dayjs(), "day"); // negativo: vencida
+
+    // Vencida -> ROJO
+    if (daysLeft < 0) {
+      return {
+        backgroundColor: "#D14343",
+        backgroundSelectedColor: "#B23838",
+        progressColor: "#FDE2E2",
+        progressSelectedColor: "#F9CACA",
+      };
+    }
+
+    // Próxima a vencer -> ÁMBAR/NARANJA
+    if (daysLeft <= WARNING_DAYS) {
+      return {
+        backgroundColor: "#F59E0B", // naranja (puedes usar "#F2C14E" si prefieres)
+        backgroundSelectedColor: "#D48806",
+        progressColor: "#7A4E03",
+        progressSelectedColor: "#623E02",
+      };
+    }
+  }
+
+  // 3) En progreso (normal) -> TURQUESA
+  if (st === "en curso" || st === "en progreso") {
     return {
       backgroundColor: "#33A691",
       backgroundSelectedColor: "#2A8C7A",
@@ -38,6 +72,8 @@ function getBarStylesByEstado(estado?: string) {
       progressSelectedColor: "#126559",
     };
   }
+
+  // 4) Pendiente (lejos del vencimiento) -> ámbar suave
   return {
     backgroundColor: "#F2C14E",
     backgroundSelectedColor: "#D9A83C",
@@ -71,7 +107,8 @@ export function mapToGanttTasks(tasks: ScheduleTask[]): Task[] {
         project: t.parentId ? String(t.parentId) : undefined,
         estado: t.estado,
         responsable: t.responsable,
-        styles: getBarStylesByEstado(t.estado), // <-- solo keys válidas
+        // ⬇️ Colores dinámicos por fecha/estado
+        styles: getBarStylesByEstado(t.estado, t.fecha_fin),
         hideChildren: false,
         isDisabled: false,
         displayOrder: t.id,
