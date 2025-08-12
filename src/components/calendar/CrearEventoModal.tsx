@@ -1,5 +1,7 @@
-import { useState } from "react";
-import { useEffect } from "react";
+// app/dashboard/schedule/CrearEventoModal.tsx
+"use client";
+
+import { useEffect, useState } from "react";
 
 export type CrearEventoModalProps = {
   open: boolean;
@@ -31,7 +33,7 @@ export function CrearEventoModal({
   const [form, setForm] = useState({
     titulo: "",
     descripcion: "",
-    tipo: "actividad",
+    tipo: "manual",
     inicio: "",
     fin: "",
   });
@@ -40,55 +42,62 @@ export function CrearEventoModal({
 
   function toDatetimeLocal(dateStr: string | Date) {
     const d = new Date(dateStr);
-    // Ajusta a tu zona horaria si lo necesitas
     d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
     return d.toISOString().slice(0, 16);
   }
 
   useEffect(() => {
-    if (open && editMode && initialData) {
+    if (!open) return;
+    if (editMode && initialData) {
       setForm({
         titulo: initialData.titulo || "",
         descripcion: initialData.descripcion || "",
-        tipo: initialData.tipo || "actividad",
+        tipo: initialData.tipo || "manual",
         inicio: initialData.inicio ? toDatetimeLocal(initialData.inicio) : "",
         fin: initialData.fin ? toDatetimeLocal(initialData.fin) : "",
       });
-    }
-    if (open && !editMode) {
+    } else {
       setForm({
         titulo: "",
         descripcion: "",
-        tipo: "actividad",
+        tipo: "manual",
         inicio: "",
         fin: "",
       });
     }
   }, [open, editMode, initialData]);
 
+  const validate = () => {
+    if (!form.titulo || !form.inicio || !form.fin) {
+      return "Por favor completa todos los campos obligatorios.";
+    }
+    const start = new Date(form.inicio);
+    const end = new Date(form.fin);
+    if (end < start) return "La fecha fin no puede ser anterior a la fecha inicio.";
+    return null;
+    };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (saving) return;
     setSaving(true);
     setError(null);
 
-    if (!form.titulo || !form.inicio || !form.fin) {
-      setError("Por favor completa todos los campos obligatorios.");
+    const msg = validate();
+    if (msg) {
+      setError(msg);
       setSaving(false);
       return;
     }
 
     try {
       await onCreate(form);
-      setForm({
-        titulo: "",
-        descripcion: "",
-        tipo: "",
-        inicio: "",
-        fin: "",
-      });
+      if (!editMode) {
+        setForm({ titulo: "", descripcion: "", tipo: "seleccione", inicio: "", fin: "" });
+      }
       onClose();
     } catch {
-      setError("Hubo un error al crear el evento.");
+      setError("Hubo un error al guardar el evento.");
     } finally {
       setSaving(false);
     }
@@ -97,74 +106,84 @@ export function CrearEventoModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center">
-      <div className="bg-white p-6 rounded-xl w-full max-w-md shadow-xl border border-verdeSuave animate-fade-in-up relative">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+      <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl animate-fade-in-up relative">
+        {/* Cerrar */}
         <button
-          className="absolute top-6 right-10 text-gray-400 hover:text-red-500 text-3xl"
+          type="button"
+          className="absolute right-3 top-2 rounded-lg px-2 py-1 text-gray-400 transition hover:bg-gray-100 hover:text-red-500"
           onClick={onClose}
+          aria-label="Cerrar"
+          disabled={saving}
         >
           ×
         </button>
-        <h3 className="text-xl font-nunito text-[#2C5959] mb-4">
-          Crear nuevo evento
+
+        {/* Título */}
+        <h3 className="mb-4 text-xl font-nunito text-[#2C5959]">
+          {editMode ? "Editar evento" : "Crear nuevo evento"}
         </h3>
-        <form onSubmit={handleSubmit} className="space-y-3">
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Título */}
           <div>
-            <label className="block text-sm font-nunito mb-1">Título *</label>
+            <label className="ui-label">Título *</label>
             <input
               type="text"
-              className="w-full rounded-lg border border-gray-300 px-3 py-2"
+              className="ui-input"
               value={form.titulo}
               onChange={(e) => setForm({ ...form, titulo: e.target.value })}
               required
             />
           </div>
+
+          {/* Descripción */}
           <div>
-            <label className="block text-sm font-nunito mb-1">
-              Descripción
-            </label>
+            <label className="ui-label">Descripción</label>
             <textarea
-              className="w-full rounded-lg border border-gray-300 px-3 py-2"
-              rows={2}
+              className="ui-input min-h-[84px] resize-y"
+              rows={3}
               value={form.descripcion}
-              onChange={(e) =>
-                setForm({ ...form, descripcion: e.target.value })
-              }
+              onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
+              placeholder="Opcional"
             />
           </div>
+
+          {/* Tipo */}
           <div>
-            <label className="block text-sm font-nunito mb-1">Tipo *</label>
+            <label className="ui-label">Tipo *</label>
             <select
-              className="w-full rounded-lg border border-gray-300 px-3 py-2"
+              className="ui-input"
               value={form.tipo}
               onChange={(e) => setForm({ ...form, tipo: e.target.value })}
               required
             >
+              <option value="manual">Manual</option>
               <option value="actividad">Actividad</option>
               <option value="reunion">Reunión</option>
               <option value="ciclo">Ciclo</option>
             </select>
           </div>
-          <div className="bg-white p-6 rounded-xl w-full max-w-lg shadow-xl border border-verdeSuave animate-fade-in-up relative">
-            <div className="flex-1">
-              <label className="block text-sm font-nunito mb-1">
-                Fecha inicio *
-              </label>
+
+          {/* Fechas */}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div>
+              <label className="ui-label">Fecha inicio *</label>
               <input
                 type="datetime-local"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2"
+                className="ui-input"
                 value={form.inicio}
                 onChange={(e) => setForm({ ...form, inicio: e.target.value })}
                 required
               />
             </div>
-            <div className="flex-1">
-              <label className="block text-sm font-nunito mb-1">
-                Fecha fin *
-              </label>
+            <div>
+              <label className="ui-label">Fecha fin *</label>
               <input
                 type="datetime-local"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2"
+                className="ui-input"
+                min={form.inicio || undefined}
                 value={form.fin}
                 onChange={(e) => setForm({ ...form, fin: e.target.value })}
                 required
@@ -172,14 +191,29 @@ export function CrearEventoModal({
             </div>
           </div>
 
-          {error && <div className="text-red-600 text-sm">{error}</div>}
-          <div className="flex justify-end pt-2">
+          {/* Error */}
+          {error && (
+            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              {error}
+            </div>
+          )}
+
+          {/* Acciones */}
+          <div className="mt-2 flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="ui-btn"
+              disabled={saving}
+            >
+              Cancelar
+            </button>
             <button
               type="submit"
               disabled={saving}
-              className="bg-[#33A691] hover:bg-[#2C5959] text-white font-nunito py-2 px-4 rounded-lg shadow"
+              className="ui-btn ui-btn-primary"
             >
-              {saving ? "Guardando..." : "Guardar"}
+              {saving ? "Guardando…" : "Guardar"}
             </button>
           </div>
         </form>
