@@ -9,6 +9,9 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        brand: "#2C5959",
+        brandInk: "#2A5559",
+        accent: "#33A691",
         verdeClaro: "#33A691",
         verdeOscuro: "#2C5959",
         verdeSuave: "#B8D9C4",
@@ -22,6 +25,13 @@ module.exports = {
         geist: ["Geist", "sans-serif"],
         mono: ["Fira Code", "monospace"],
         nunitoSans: ["Nunito Sans", "sans-serif"],
+      },
+      boxShadow: {
+        card: "0 1px 3px rgba(0,0,0,0.06)",
+      },
+      borderRadius: {
+        xl: "1rem",
+        "2xl": "1.25rem",
       },
     },
   },

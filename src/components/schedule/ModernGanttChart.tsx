@@ -24,6 +24,7 @@ const MONTHS = [
   "Nov",
   "Dic",
 ];
+const WARNING_DAYS = 3;
 type ExtendedTask = Task & { estado?: string; responsable?: string };
 
 export default function ModernGanttChart({
@@ -92,7 +93,7 @@ export default function ModernGanttChart({
     });
     doc.setFontSize(16);
     doc.setTextColor(44, 89, 89);
-    doc.text("CronogramaPAMEC", 15, 18);
+    doc.text("Cronograma PAMEC", 15, 18);
     const fecha = new Date().toLocaleDateString();
     doc.setFontSize(10);
     doc.setTextColor(40, 40, 40);
@@ -304,9 +305,9 @@ export default function ModernGanttChart({
   return (
     <div>
       {/* Controles y acciones */}
-      <div className="flex flex-wrap gap-2 mb-2 items-center border-b border-[#e0e7ea] pb-2 px-1 bg-transparent">
+      <div className="flex flex-wrap gap-4 mb-4 items-center border-b border-[#e0e7ea] pb-2 px-1 bg-transparent">
         <span className="font-nunito text-verdeOscuro text-base tracking-tight">
-          Diagrama Gantt del Proyecto
+          📎
         </span>
         <div className="flex-1" />
         {/* View switcher */}
@@ -319,7 +320,7 @@ export default function ModernGanttChart({
             <button
               key={v.t}
               onClick={() => setViewMode(v.k)}
-              className={`px-3 py-1 rounded-md text-sm font-semibold transition-colors ${
+              className={`px-3 py-1 rounded-md text-sm font-nunito transition-colors ${
                 viewMode === v.k ? "text-white" : "text-[#2C5959]"
               }`}
               style={{
@@ -347,7 +348,7 @@ export default function ModernGanttChart({
         {/* Export/Fullscreen */}
         <Tooltip title="Descargar Excel del cronograma">
           <button
-            className="flex items-center gap-1 px-2 py-1 bg-[#217346] hover:bg-[#185c37] text-white rounded-md shadow font-nunito text-sm transition-all"
+            className="flex items-center gap-1 px-1 py-1 bg-verdeOscuro hover:bg-[#185c37] text-white rounded-md shadow font-nunito text-sm transition-all"
             onClick={handleDescargarExcel}
             type="button"
           >
@@ -357,7 +358,7 @@ export default function ModernGanttChart({
         </Tooltip>
         <Tooltip title="Descargar PDF combinado (tabla + Gantt)">
           <button
-            className="flex items-center gap-1 px-2 py-1 bg-[#D14343] hover:bg-[#b23838] text-white rounded-md shadow font-nunito text-sm transition-all"
+            className="flex items-center gap-1 px-1 py-1 bg-[#D14343] hover:bg-[#b23838] text-white rounded-md shadow font-nunito text-sm transition-all"
             onClick={handleExportarPDFCompleto}
             type="button"
           >
@@ -367,7 +368,7 @@ export default function ModernGanttChart({
         </Tooltip>
         <Tooltip title="Ver diagrama en pantalla completa">
           <button
-            className="flex items-center gap-1 px-2 py-1 bg-verdeClaro hover:bg-verdeOscuro text-white rounded-md shadow font-nunito text-sm transition-all"
+            className="flex items-center gap-1 px-1 py-1 bg-verdeOscuro hover:bg-verdeOscuro text-white rounded-md shadow font-nunito text-sm transition-all"
             onClick={handleFullScreen}
             type="button"
           >
@@ -380,9 +381,13 @@ export default function ModernGanttChart({
       </div>
       <div className="flex flex-wrap items-center gap-3 mb-2 text-sm font-nunito">
         {[
-          { label: "Pendiente", color: "#F2C14E" },
-          { label: "En progreso", color: "#2C5959" },
-          { label: "Finalizado", color: "#33A691 " },
+          { label: "Completada", color: "#2C5959" },
+          {
+            label: `Próxima a vencer (≤ ${WARNING_DAYS} días)`,
+            color: "#F59E0B",
+          },
+          { label: "Vencida", color: "#D14343" },
+          { label: "En progreso", color: "#33A691" },
         ].map((s) => (
           <div key={s.label} className="flex items-center gap-2">
             <span
@@ -398,6 +403,7 @@ export default function ModernGanttChart({
           </div>
         ))}
       </div>
+
       {/* Gantt */}
       <div
         ref={ganttDiv}
@@ -420,7 +426,7 @@ export default function ModernGanttChart({
             listCellWidth="200px" // más cómodo para nombres largos
             columnWidth={columnWidth}
             rowHeight={34}
-            fontFamily="Nunito, Arial, sans-serif"
+            fontFamily="Nunito"
             fontSize="13px"
             barCornerRadius={8}
             barFill={90}
@@ -488,6 +494,14 @@ export default function ModernGanttChart({
         /* Hover fila */
         .svgWrapper:hover .bar {
           opacity: 0.95;
+        }
+        /* Texto dentro de las barras */
+        .barLabel,
+        .bar-label,
+        .projectLabel,
+        .milestoneText {
+          fill: #000 !important; /* negro */
+          font-weight: 600;
         }
       `}</style>
     </div>

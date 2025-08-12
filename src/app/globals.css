@@ -50,6 +50,55 @@
   white-space: nowrap;
 }
 
+/* e.g. app/globals.css */@layer components {
+  .ui-label { @apply mb-1.5 block text-xs font-medium text-brandInk; }
 
+  .ui-input {
+    @apply h-10 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-[#171717]
+           outline-none transition placeholder:text-gray-400
+           focus:border-accent focus:ring-2 focus:ring-accent/20;
+  }
 
+  .ui-btn {
+    @apply h-10 rounded-2xl border border-gray-300 bg-white px-4 text-sm text-gray-700
+           hover:bg-gray-50 transition
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40;
+  }
 
+  .ui-btn-primary {
+    @apply border-transparent bg-brand text-white shadow hover:opacity-95
+           focus-visible:ring-2 focus-visible:ring-accent/50;
+  }
+
+  .ui-btn-ghost {
+    @apply inline-flex h-8 items-center justify-center rounded-lg px-2 text-sm text-brandInk
+           hover:bg-[#eaf8f2] transition
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40;
+  }
+
+  .ui-link {
+    @apply inline-flex items-center rounded-lg px-2 py-1 text-xs font-medium text-brandInk
+           hover:bg-[#eaf8f2] transition
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40;
+  }
+
+  .ui-card { @apply rounded-2xl border border-gray-200 bg-white/80 p-4 shadow-sm; }
+
+  .ui-badge { @apply inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium; }
+  .ui-badge-success { @apply bg-emerald-100 text-emerald-700; }
+  .ui-badge-warning { @apply bg-amber-100 text-amber-700; }
+  .ui-badge-neutral { @apply bg-gray-100 text-gray-700; }
+  .ui-badge-danger  { @apply bg-rose-100 text-rose-700; }
+
+  /* Tabla: evita usar arbitrary values dentro de @apply */
+  .ui-table-head {
+    @apply grid bg-gray-50/80 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-600;
+    grid-template-columns: 4fr 2.8fr 1.8fr 2fr 1.4fr 1.6fr; /* antes: grid-cols-[...] */
+  }
+  .ui-table-row {
+    @apply grid px-4 py-3 text-sm transition;
+    grid-template-columns: 4fr 2.8fr 1.8fr 2fr 1.4fr 1.6fr;
+  }
+  .ui-th { @apply pr-3; }
+  .ui-td { @apply pr-3; }
+}
