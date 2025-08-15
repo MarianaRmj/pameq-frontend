@@ -47,6 +47,7 @@ export function EvidenceListModal({
       {
         method: "DELETE",
         credentials: "include",
+        body: new FormData()
       }
     );
     if (!r.ok) return alert("No se pudo eliminar");

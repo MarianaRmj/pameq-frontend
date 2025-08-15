@@ -13,7 +13,7 @@ export function useActivities() {
     setLoading(true);
     const [list, procs] = await Promise.all([
       api<Activity[]>("/activities"),
-      api<Process[]>("/catalog/processes").catch(() => []),
+      api<Process[]>("/activities/catalog/processes").catch(() => []),
     ]);
     setItems(list);
     setProcesos(procs);
