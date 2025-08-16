@@ -9,9 +9,11 @@ import { ActivityForm } from "@/components/activities/ActivityForm";
 import { ConfirmDialog } from "@/components/activities/ConfirmDialog";
 import { EvidenceListModal } from "@/components/activities/EvidenceListModal";
 import { EvidenceUpload } from "@/components/activities/EvidenceUpload";
+import { useAuth } from "@/context/AuthContext";
 
 export default function ActivitiesPage() {
   const { items, procesos, loading, load, remove } = useActivities();
+  const { user: usuarioAutenticado } = useAuth();
 
   const [openCreate, setOpenCreate] = useState(false);
   const [editItem, setEditItem] = useState<Activity | null>(null);
@@ -50,8 +52,9 @@ export default function ActivitiesPage() {
         onOpenList={(a) => setOpenListFor(a.id)}
       />
 
-      {openCreate && (
+      {openCreate && usuarioAutenticado && (
         <ActivityForm
+          userId={usuarioAutenticado.id}
           procesos={procesos}
           onClose={() => setOpenCreate(false)}
           onSaved={async () => {
@@ -62,8 +65,9 @@ export default function ActivitiesPage() {
         />
       )}
 
-      {editItem && (
+      {editItem && usuarioAutenticado && (
         <ActivityForm
+          userId={usuarioAutenticado.id}
           procesos={procesos}
           onClose={() => setEditItem(null)}
           onSaved={async () => {

@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "types": ["next-auth"],
     "target": "ES2017",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
@@ -22,6 +23,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "tailwind.config.js", "src/components/schedule/GanttSyncfusionDemo.jsx"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx",  "types/next-auth.d.ts", ".next/types/**/*.ts", "tailwind.config.js", "src/components/schedule/GanttSyncfusionDemo.jsx"],
   "exclude": ["node_modules"]
 }

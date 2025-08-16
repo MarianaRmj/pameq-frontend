@@ -2,34 +2,24 @@
 "use client";
 import React, { useState, FormEvent } from "react";
 import Link from "next/link";
+  import { useAuth } from "@/context/AuthContext";
 
 export default function Login() {
   const [usuario, setUsuario] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
+  const { login } = useAuth();
 
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
-
-    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
     try {
-      const res = await fetch(`${API_URL}/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        // Si backend espera { email, password }
-        body: JSON.stringify({ email: usuario, password }),
-      });
-      const data = await res.json();
-
-      if (!res.ok) throw new Error(data.message || "Error de autenticación");
-
-      localStorage.setItem("token", data.token);
-      window.location.href = "/dashboard";
+      await login(usuario, password); // usa la función del contexto
+      window.location.href = "/dashboard"; // o router.push("/dashboard")
     } catch (err: any) {
-      setError(err.message || "Error de red");
+      setError(err.message || "Error al iniciar sesión");
     } finally {
       setLoading(false);
     }
