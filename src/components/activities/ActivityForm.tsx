@@ -1,11 +1,16 @@
-// app/dashboard/activities/ActivityForm.tsx
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { api } from "@/app/lib/api";
-import { Process, EstadoActividad, Activity } from "@/app/dashboard/activities/types";
+import {
+  Process,
+  EstadoActividad,
+  Activity,
+} from "@/app/dashboard/activities/types";
+import { useAuth } from "@/context/AuthContext";
 
 type Props = {
+  userId: number;
   procesos: Process[];
   onClose: () => void;
   onSaved: () => Promise<void>;
@@ -13,7 +18,6 @@ type Props = {
   initial?: Activity | null;
 };
 
-/* util: ISO -> "YYYY-MM-DDTHH:mm" para <input type="datetime-local"> */
 function toInputDT(iso?: string) {
   if (!iso) return "";
   const d = new Date(iso);
@@ -23,7 +27,13 @@ function toInputDT(iso?: string) {
   return local.toISOString().slice(0, 16);
 }
 
-export function ActivityForm({ procesos, onClose, onSaved, mode = "create", initial = null }: Props) {
+export function ActivityForm({
+  procesos,
+  onClose,
+  onSaved,
+  mode = "create",
+  initial = null,
+}: Props) {
   const [form, setForm] = useState({
     nombre_actividad: "",
     descripcion: "",
@@ -37,9 +47,20 @@ export function ActivityForm({ procesos, onClose, onSaved, mode = "create", init
     responsableId: 1,
     procesosIds: [] as number[],
   });
+
+  const [formOptions, setFormOptions] = useState<{
+    sedes: { id: number; nombre_sede: string }[];
+    responsables: { id: number; nombre: string; email: string }[];
+    procesos: Process[];
+    institution: { id: number; nombre: string };
+    ciclo?: { id: number; fecha_inicio: string };
+  } | null>(null);
+
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchProc, setSearchProc] = useState("");
+  const { user } = useAuth();
+  const userId = user?.id;
 
   // Prefill cuando es edición
   useEffect(() => {
@@ -55,9 +76,46 @@ export function ActivityForm({ procesos, onClose, onSaved, mode = "create", init
       sedeId: initial.sedeId,
       cicloId: initial.cicloId,
       responsableId: initial.responsableId,
-      procesosIds: initial.procesos_invitados?.map(p => p.id) ?? [],
+      procesosIds: initial.procesos_invitados?.map((p) => p.id) ?? [],
     });
   }, [initial]);
+
+  // Fetch form options cuando se crea
+  useEffect(() => {
+    if (mode !== "create") return;
+    if (!userId) {
+      console.warn("⚠️ userId no definido:", user);
+      return;
+    }
+    async function fetchFormOptions() {
+      try {
+        const res = await fetch(
+          `http://localhost:3001/activities/form-options?userId=${String(
+            userId
+          )}`
+        );
+
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(`Error ${res.status}: ${text}`);
+        }
+
+        const data = await res.json();
+        setFormOptions(data);
+
+        setForm((prev) => ({
+          ...prev,
+          institutionId: data.institution.id,
+          cicloId: data.ciclo?.id,
+          responsableId: data.responsables[0]?.id ?? 1,
+        }));
+      } catch (err) {
+        console.error("❌ Error cargando opciones del formulario:", err);
+      }
+    }
+
+    fetchFormOptions();
+  }, [mode, userId, user]);
 
   const filteredProcesos = useMemo(() => {
     const q = searchProc.trim().toLowerCase();
@@ -79,12 +137,16 @@ export function ActivityForm({ procesos, onClose, onSaved, mode = "create", init
     setError(null);
     try {
       const payload = { ...form };
-      // Si vienen datetime-local, el backend los acepta en ISO (toISOString)
-      // En este punto ya están como "YYYY-MM-DDTHH:mm" local; los mandamos tal cual y Nest los parsea (o podrías convertir a ISO).
       if (mode === "edit" && initial) {
-        await api(`/activities/${initial.id}`, { method: "PATCH", body: JSON.stringify(payload) });
+        await api(`/activities/${initial.id}`, {
+          method: "PATCH",
+          body: JSON.stringify(payload),
+        });
       } else {
-        await api("/activities", { method: "POST", body: JSON.stringify(payload) });
+        await api("/activities", {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
       }
       await onSaved();
     } catch (err: unknown) {
@@ -98,7 +160,6 @@ export function ActivityForm({ procesos, onClose, onSaved, mode = "create", init
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div className="relative w-full max-w-4xl overflow-hidden rounded-2xl bg-gradient-to-br from-white to-gray-50 shadow-2xl ring-1 ring-gray-200 font-nunito">
-        {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-200/70 px-6 py-4">
           <h2 className="text-lg font-semibold text-[#2A5559] tracking-tight">
             {mode === "edit" ? "Editar actividad" : "Nueva actividad"}
@@ -112,20 +173,24 @@ export function ActivityForm({ procesos, onClose, onSaved, mode = "create", init
           </button>
         </div>
 
-        {/* Form (scrollable) */}
         <form
           id="activityForm"
           onSubmit={handleSubmit}
           className="max-h-[72vh] overflow-y-auto px-6 py-5 space-y-5"
         >
-          {/* Básicos */}
           <Section title="Básicos">
             <div className="grid grid-cols-12 gap-4">
-              <Field className="col-span-12" label="Nombre de la actividad" required>
+              <Field
+                className="col-span-12"
+                label="Nombre de la actividad"
+                required
+              >
                 <input
                   className="ui-input"
                   value={form.nombre_actividad}
-                  onChange={(e) => setForm({ ...form, nombre_actividad: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, nombre_actividad: e.target.value })
+                  }
                   placeholder="Ej. Socialización de mejoras PAMEQ"
                   required
                 />
@@ -136,32 +201,45 @@ export function ActivityForm({ procesos, onClose, onSaved, mode = "create", init
                   className="ui-input min-h-[96px] resize-y"
                   rows={4}
                   value={form.descripcion}
-                  onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, descripcion: e.target.value })
+                  }
                   placeholder="Objetivo, alcance, metodología…"
                 />
               </Field>
             </div>
           </Section>
 
-          {/* Programación */}
           <Section title="Programación">
             <div className="grid grid-cols-12 gap-4">
-              <Field className="col-span-12 md:col-span-6" label="Fecha inicio" required>
+              <Field
+                className="col-span-12 md:col-span-6"
+                label="Fecha inicio"
+                required
+              >
                 <input
                   type="datetime-local"
                   className="ui-input"
                   value={form.fecha_inicio}
-                  onChange={(e) => setForm({ ...form, fecha_inicio: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, fecha_inicio: e.target.value })
+                  }
                   required
                 />
               </Field>
 
-              <Field className="col-span-12 md:col-span-6" label="Fecha fin" required>
+              <Field
+                className="col-span-12 md:col-span-6"
+                label="Fecha fin"
+                required
+              >
                 <input
                   type="datetime-local"
                   className="ui-input"
                   value={form.fecha_fin}
-                  onChange={(e) => setForm({ ...form, fecha_fin: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, fecha_fin: e.target.value })
+                  }
                   required
                 />
               </Field>
@@ -177,73 +255,72 @@ export function ActivityForm({ procesos, onClose, onSaved, mode = "create", init
             </div>
           </Section>
 
-          {/* Contexto */}
           <Section title="Contexto">
             <div className="grid grid-cols-12 gap-4">
-              <Field className="col-span-12 md:col-span-4" label="Institución (ID)" required>
+              <Field className="col-span-12 md:col-span-4" label="Institución">
                 <input
-                  type="number"
                   className="ui-input"
-                  value={form.institutionId}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      institutionId: Number(e.target.value) || 0,
-                      sedeId: undefined,
-                      cicloId: undefined,
-                    })
-                  }
-                  required
+                  value={formOptions?.institution?.nombre ?? ""}
+                  disabled
                 />
               </Field>
 
-              <Field className="col-span-12 md:col-span-4" label="Sede (ID)">
-                <input
-                  type="number"
+              <Field className="col-span-12 md:col-span-4" label="Sede">
+                <select
                   className="ui-input"
                   value={form.sedeId ?? ""}
                   onChange={(e) =>
                     setForm({
                       ...form,
-                      sedeId: e.target.value ? Number(e.target.value) : undefined,
-                      cicloId: undefined,
+                      sedeId: e.target.value
+                        ? Number(e.target.value)
+                        : undefined,
                     })
                   }
-                />
+                >
+                  <option value="">Seleccione una sede</option>
+                  {formOptions?.sedes.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.nombre_sede}
+                    </option>
+                  ))}
+                </select>
               </Field>
 
-              <Field className="col-span-12 md:col-span-4" label="Ciclo (ID)">
+              <Field className="col-span-12 md:col-span-4" label="Ciclo">
                 <input
-                  type="number"
                   className="ui-input"
                   value={form.cicloId ?? ""}
-                  onChange={(e) =>
-                    setForm({
-                      ...form,
-                      cicloId: e.target.value ? Number(e.target.value) : undefined,
-                    })
-                  }
+                  disabled
                 />
               </Field>
             </div>
           </Section>
 
-          {/* Participantes */}
           <Section title="Participantes">
             <div className="grid grid-cols-12 gap-4">
-              <Field className="col-span-12 md:col-span-6" label="Responsable (userId)" required>
-                <input
-                  type="number"
+              <Field
+                className="col-span-12 md:col-span-6"
+                label="Responsable"
+                required
+              >
+                <select
                   className="ui-input"
                   value={form.responsableId}
                   onChange={(e) =>
                     setForm({
                       ...form,
-                      responsableId: Number(e.target.value) || 0,
+                      responsableId: Number(e.target.value),
                     })
                   }
                   required
-                />
+                >
+                  {formOptions?.responsables.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.nombre} ({r.email})
+                    </option>
+                  ))}
+                </select>
               </Field>
 
               <div className="col-span-12 md:col-span-6">
@@ -258,7 +335,9 @@ export function ActivityForm({ procesos, onClose, onSaved, mode = "create", init
 
                   <div className="max-h-36 overflow-y-auto rounded-md border border-gray-200/80 bg-white/70 backdrop-blur-sm divide-y divide-gray-100">
                     {filteredProcesos.length === 0 ? (
-                      <div className="px-3 py-2 text-sm text-gray-500">Sin resultados</div>
+                      <div className="px-3 py-2 text-sm text-gray-500">
+                        Sin resultados
+                      </div>
                     ) : (
                       filteredProcesos.map((p) => {
                         const checked = form.procesosIds.includes(p.id);
@@ -281,44 +360,23 @@ export function ActivityForm({ procesos, onClose, onSaved, mode = "create", init
                       })
                     )}
                   </div>
-
-                  {form.procesosIds.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {form.procesosIds.map((id) => {
-                        const proc = procesos.find((x) => x.id === id);
-                        if (!proc) return null;
-                        return (
-                          <span
-                            key={id}
-                            className="inline-flex items-center gap-2 rounded-full bg-[#e4f7ec] px-3 py-1 text-xs text-[#2A5559] ring-1 ring-[#2A5559]/20"
-                          >
-                            {proc.nombre}
-                            <button
-                              type="button"
-                              onClick={() => toggleProceso(id)}
-                              className="rounded-full px-1 text-[#2A5559] hover:bg-white/70"
-                              aria-label={`Quitar ${proc.nombre}`}
-                            >
-                              ×
-                            </button>
-                          </span>
-                        );
-                      })}
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
           </Section>
 
-          {/* Estado */}
           <Section title="Estado">
             <div className="grid grid-cols-12 gap-4">
               <Field className="col-span-12 md:col-span-4" label="Estado">
                 <select
                   className="ui-input"
                   value={form.estado}
-                  onChange={(e) => setForm({ ...form, estado: e.target.value as EstadoActividad })}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      estado: e.target.value as EstadoActividad,
+                    })
+                  }
                 >
                   <option value="programada">programada</option>
                   <option value="en_proceso">en_proceso</option>
@@ -336,7 +394,6 @@ export function ActivityForm({ procesos, onClose, onSaved, mode = "create", init
           )}
         </form>
 
-        {/* Acciones (NO fijas) */}
         <div className="flex items-center justify-end gap-2 border-t border-gray-200/70 bg-white/70 px-6 py-4">
           <button
             type="button"
@@ -351,7 +408,13 @@ export function ActivityForm({ procesos, onClose, onSaved, mode = "create", init
             disabled={saving}
             className="h-10 rounded-2xl bg-[#2C5959] px-5 text-sm font-medium text-white shadow hover:opacity-95 disabled:opacity-70 transition"
           >
-            {saving ? (mode === "edit" ? "Actualizando…" : "Guardando…") : (mode === "edit" ? "Guardar cambios" : "Guardar actividad")}
+            {saving
+              ? mode === "edit"
+                ? "Actualizando…"
+                : "Guardando…"
+              : mode === "edit"
+              ? "Guardar cambios"
+              : "Guardar actividad"}
           </button>
         </div>
       </div>
@@ -359,9 +422,13 @@ export function ActivityForm({ procesos, onClose, onSaved, mode = "create", init
   );
 }
 
-/* ---------- helpers visuales ---------- */
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
     <fieldset className="rounded-xl border border-gray-200/70 bg-white/60 p-4 shadow-sm">
       <legend className="px-2 text-xs font-semibold uppercase tracking-wide text-[#2A5559]">
@@ -373,8 +440,16 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 function Field({
-  label, required, className, children,
-}: { label: string; required?: boolean; className?: string; children: React.ReactNode }) {
+  label,
+  required,
+  className,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  className?: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className={className}>
       <label className="ui-label">
