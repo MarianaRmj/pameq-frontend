@@ -305,19 +305,17 @@ export function ActivityForm({
                 required
               >
                 <select
-                  className="ui-input"
+                  name="responsableId"
                   value={form.responsableId}
                   onChange={(e) =>
-                    setForm({
-                      ...form,
-                      responsableId: Number(e.target.value),
-                    })
+                    setForm({ ...form, responsableId: Number(e.target.value) })
                   }
-                  required
+                  className="ui-input"
                 >
-                  {formOptions?.responsables.map((r) => (
-                    <option key={r.id} value={r.id}>
-                      {r.nombre} ({r.email})
+                  <option value="">Seleccione un responsable</option>
+                  {formOptions?.responsables?.map((usuario) => (
+                    <option key={usuario.id} value={usuario.id}>
+                      {usuario.nombre}
                     </option>
                   ))}
                 </select>

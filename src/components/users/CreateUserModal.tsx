@@ -38,7 +38,14 @@ export const CreateUserModal = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!formData.sedeId || isNaN(formData.sedeId)) {
+      alert("Debe seleccionar una sede válida.");
+      return;
+    }
+
     onSave(formData);
+
     setFormData({
       nombre: "",
       email: "",
@@ -59,6 +66,7 @@ export const CreateUserModal = ({
         <h2 className="text-xl font-nunito mb-4 text-verdeOscuro">
           Crear Nuevo Usuario
         </h2>
+
         <div className="mb-2">
           <label className="block text-sm font-nunito">Nombre</label>
           <input
@@ -69,6 +77,7 @@ export const CreateUserModal = ({
             required
           />
         </div>
+
         <div className="mb-2">
           <label className="block text-sm font-nunito">Email</label>
           <input
@@ -80,6 +89,7 @@ export const CreateUserModal = ({
             required
           />
         </div>
+
         <div className="mb-2">
           <label className="block text-sm font-nunito">Contraseña</label>
           <input
@@ -91,6 +101,7 @@ export const CreateUserModal = ({
             required
           />
         </div>
+
         <div className="mb-2">
           <label className="block text-sm font-nunito">Rol</label>
           <select
@@ -100,7 +111,9 @@ export const CreateUserModal = ({
             className="w-full border rounded px-3 py-1 mt-1"
             required
           >
-            <option value="">-- Selecciona un rol --</option>
+            <option value="" disabled>
+              -- Selecciona un rol --
+            </option>
             {roles.map((rol) => (
               <option key={rol} value={rol}>
                 {rol}
@@ -108,15 +121,19 @@ export const CreateUserModal = ({
             ))}
           </select>
         </div>
+
         <div className="mb-4">
           <label className="block text-sm font-nunito">Sede</label>
           <select
             name="sedeId"
-            value={formData.sedeId || ""}
+            value={formData.sedeId ?? ""}
             onChange={handleChange}
             className="w-full border rounded px-3 py-1 mt-1"
+            required
           >
-            <option value="">-- Selecciona una sede --</option>
+            <option value="" disabled>
+              -- Selecciona una sede --
+            </option>
             {sedes.map((sede) => (
               <option key={sede.id} value={sede.id}>
                 {sede.nombre_sede}
@@ -124,6 +141,7 @@ export const CreateUserModal = ({
             ))}
           </select>
         </div>
+
         <div className="flex justify-end gap-3 font-nunito">
           <button
             type="button"

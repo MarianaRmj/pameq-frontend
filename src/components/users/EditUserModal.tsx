@@ -9,7 +9,7 @@ interface EditUserModalProps {
   onClose: () => void;
   onSave: (updated: Partial<UserResponseDto>) => void;
   sedes: { id: number; nombre_sede: string }[];
-  roles: string[]; // ✅ AGREGA ESTO
+  roles: string[];
 }
 
 export const EditUserModal = ({
@@ -34,10 +34,18 @@ export const EditUserModal = ({
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    setFormState((prev) => ({ ...prev, [name]: value }));
+    setFormState((prev) => ({
+      ...prev,
+      [name]: name === "sedeId" ? Number(value) : value,
+    }));
   };
 
   const handleSubmit = () => {
+    if (!formState.sedeId || isNaN(formState.sedeId)) {
+      alert("Debes seleccionar una sede válida.");
+      return;
+    }
+
     onSave(formState);
   };
 
@@ -69,7 +77,9 @@ export const EditUserModal = ({
             onChange={handleChange}
             className="border px-3 py-2 rounded"
           >
-            <option value="">Seleccionar rol</option>
+            <option value="" disabled>
+              Seleccionar rol
+            </option>
             {roles.map((rol) => (
               <option key={rol} value={rol}>
                 {rol.charAt(0).toUpperCase() + rol.slice(1)}
@@ -78,11 +88,14 @@ export const EditUserModal = ({
           </select>
           <select
             name="sedeId"
-            value={formState.sedeId || ""}
+            value={formState.sedeId ?? ""}
             onChange={handleChange}
             className="border px-3 py-2 rounded"
+            required
           >
-            <option value="">Seleccionar sede</option>
+            <option value="" disabled>
+              Seleccionar sede
+            </option>
             {sedes.map((sede) => (
               <option key={sede.id} value={sede.id}>
                 {sede.nombre_sede}
