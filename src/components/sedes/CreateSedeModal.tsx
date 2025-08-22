@@ -63,7 +63,7 @@ export const CreateSedeModal = ({
         onSubmit={handleSubmit}
         className="bg-white rounded-xl p-6 w-full max-w-md shadow-xl"
       >
-        <h3 className="text-lg font-bold mb-4 text-verdeOscuro">Nueva Sede</h3>
+        <h3 className="text-lg font-nunito mb-4 text-verdeOscuro">Nueva Sede</h3>
         <div className="mb-3">
           <label className="block text-sm font-nunito">Nombre sede</label>
           <input

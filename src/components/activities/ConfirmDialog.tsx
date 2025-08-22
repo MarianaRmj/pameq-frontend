@@ -21,7 +21,7 @@ export function ConfirmDialog({
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 p-4">
       <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-5 shadow-xl">
-        <h3 className="text-base font-semibold text-[#2A5559]">{title}</h3>
+        <h3 className="text-base font-nunito text-[#2A5559]">{title}</h3>
         {description && (
           <div className="mt-2 text-sm text-gray-700">{description}</div>
         )}

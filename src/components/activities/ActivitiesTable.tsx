@@ -27,37 +27,37 @@ export function ActivitiesTable({
       {/* Head */}
       <div className={`${COLS} bg-verdeOscuro/95 text-white`}>
         <div
-          className={`ui-th p-0${CELL} text-[11px] font-semibold uppercase tracking-wide`}
+          className={`ui-th p-0${CELL} text-[11px] font-nunito uppercase tracking-wide`}
         >
           Actividad
         </div>
         <div
-          className={`ui-th p-0 ${CELL} text-[11px] font-semibold uppercase tracking-wide`}
+          className={`ui-th p-0 ${CELL} text-[11px] font-nunito uppercase tracking-wide`}
         >
           Fechas
         </div>
         <div
-          className={`ui-th p-0 ${CELL} text-[11px] font-semibold uppercase tracking-wide`}
+          className={`ui-th p-0 ${CELL} text-[11px] font-nunito uppercase tracking-wide`}
         >
           Responsable
         </div>
         <div
-          className={`ui-th p-0 ${CELL} text-[11px] font-semibold uppercase tracking-wide`}
+          className={`ui-th p-0 ${CELL} text-[11px] font-nunito uppercase tracking-wide`}
         >
           Procesos
         </div>
         <div
-          className={`ui-th p-0 ${CELL} text-center text-[11px] font-semibold uppercase tracking-wide`}
+          className={`ui-th p-0 ${CELL} text-center text-[11px] font-nunito uppercase tracking-wide`}
         >
           Evidencias
         </div>
         <div
-          className={`ui-th p-0 ${CELL} text-right text-[11px] font-semibold uppercase tracking-wide`}
+          className={`ui-th p-0 ${CELL} text-right text-[11px] font-nunito uppercase tracking-wide`}
         >
           Estado
         </div>
         <div
-          className={`ui-th p-0 ${CELL} text-right text-[11px] font-semibold uppercase tracking-wide`}
+          className={`ui-th p-0 ${CELL} text-right text-[11px] font-nunito uppercase tracking-wide`}
         >
           Acciones
         </div>
@@ -82,7 +82,7 @@ export function ActivitiesTable({
             >
               {/* Actividad */}
               <div className={`ui-td p-0 ${CELL}`}>
-                <div className="line-clamp-1 text-[15px] font-semibold text-[#102626]">
+                <div className="line-clamp-1 text-[15px] font-nunito text-[#102626]">
                   {a.nombre_actividad}
                 </div>
                 <div className="mt-1 text-xs text-gray-500">

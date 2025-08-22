@@ -36,7 +36,7 @@ export default function Login() {
             className="w-28 mb-2 drop-shadow"
             style={{ filter: "grayscale(100%) brightness(1.1)" }}
           />
-          <h2 className="text-2xl font-bold text-[#2C5959] tracking-wide text-center">
+          <h2 className="text-2xl font-nunito text-[#2C5959] tracking-wide text-center">
             ¡Bienvenido a PAMEQ!
           </h2>
         </div>

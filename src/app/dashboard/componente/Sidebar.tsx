@@ -1,35 +1,37 @@
 "use client";
+
 import Link from "next/link";
-import { useState } from "react";
+import { usePathname } from "next/navigation";
+import { KeyboardEvent, useState } from "react";
 import {
   FiChevronDown,
   FiUsers,
   FiBarChart2,
   FiInfo,
   FiHome,
-  FiEdit,
   FiList,
-  FiFilter,
+  FiSliders,
   FiGrid,
   FiCheckCircle,
   FiTrendingUp,
   FiClipboard,
-  FiEye,
   FiAward,
   FiBookOpen,
-  FiGitBranch,
-  FiZap,
-  FiBarChart,
   FiLogOut,
+  FiActivity,
+  FiCalendar,
+  FiClock,
+  FiCheckSquare,
+  FiMapPin,
+  FiMenu,
+  FiX,
 } from "react-icons/fi";
-import { AiFillCalendar } from "react-icons/ai";
-import { BsFillBarChartFill } from "react-icons/bs";
-import { FaMapMarkedAlt, FaUniversity } from "react-icons/fa";
 
 export default function Sidebar() {
   const [openPamec, setOpenPamec] = useState(false);
   const [openInforme, setOpenInforme] = useState(false);
   const [openParametrization, setOpenParametrization] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -37,100 +39,239 @@ export default function Sidebar() {
   };
 
   return (
-    <aside className="w-64 bg-[#2C5959] text-white p-5 border-r-4 font-nunito shadow-md min-h-screen flex flex-col justify-between">
-
-      {/* Parte superior */}
-
-        {/* Logo y Usuario */}
-        <div className="flex flex-col items-center mb-10">
-         <div className="flex flex-col items-center mb-6">
-          <img
-            src="/logo2.png"
-            alt="PAMEQ"
-            className="w-28 drop-shadow"
-            style={{ filter: "grayscale(100%) brightness(3.3)" }}
-          />
-          <h1 className="mt-3 text-lg font-nunito tracking-wide">IPS Colombia</h1>
-          <p className="text-sm font-nunito text-neutral-200">Usuario Admin</p>
+    <aside
+      className={[
+        "bg-[#2C5959] text-white p-4 border-r-4 font-nunito shadow-md min-h-screen flex flex-col justify-between transition-all duration-300",
+        collapsed ? "w-20" : "w-64",
+      ].join(" ")}
+    >
+      {/* Top */}
+      <div>
+        {/* Header + Toggle */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <img
+              src="/logo2.png"
+              alt="PAMEQ"
+              className={[
+                "drop-shadow transition-all",
+                collapsed ? "w-8" : "w-16",
+              ].join(" ")}
+              style={{ filter: "grayscale(100%) brightness(3.3)" }}
+            />
+            {!collapsed && (
+              <div className="leading-tight">
+                <h1 className="text-base font-bold tracking-wide">PAMEQ</h1>
+                <p className="text-xs text-neutral-300">IPS Colombia</p>
+              </div>
+            )}
+          </div>
+          <button
+            onClick={() => setCollapsed((v) => !v)}
+            className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+            aria-label={collapsed ? "Expandir menú" : "Colapsar menú"}
+            title={collapsed ? "Expandir menú" : "Colapsar menú"}
+          >
+            {collapsed ? <FiMenu /> : <FiX />}
+          </button>
         </div>
 
         {/* Navegación */}
         <nav className="space-y-2">
-          <SidebarLink href="/dashboard" icon={<FiHome />}>Inicio</SidebarLink>
+          <SidebarLink
+            href="/dashboard"
+            icon={<FiHome />}
+            collapsed={collapsed}
+            label="Inicio"
+          />
 
-            <DropdownSection
+          <DropdownSection
             label="Parametrización"
             isOpen={openParametrization}
             toggleOpen={() => setOpenParametrization(!openParametrization)}
             items={[
-              { label: "Institución", href: "/dashboard/parameterization", icon: <FaUniversity /> },
-              { label: "Sedes", href: "/dashboard/parameterization/sedes", icon: <FaMapMarkedAlt /> },
+              {
+                label: "Institución",
+                href: "/dashboard/parameterization",
+                icon: <FiHome />,
+              },
+              {
+                label: "Sedes",
+                href: "/dashboard/parameterization/sedes",
+                icon: <FiMapPin />,
+              },
+              {
+                label: "Procesos",
+                href: "/dashboard/parameterization/procesos",
+                icon: <FiUsers />,
+              },
             ]}
+            collapsed={collapsed}
           />
-          <SidebarLink href="/dashboard/calendar" icon={<AiFillCalendar />}>Calendario</SidebarLink>
-          <SidebarLink href="/dashboard/schedule" icon={<FiBarChart2 />}>Cronograma</SidebarLink>
-          <SidebarLink href="/dashboard/activities" icon={<BsFillBarChartFill />}>Actividades Previas</SidebarLink>
 
-          {/* PAMEC */}
+          <SidebarLink
+            href="/dashboard/calendar"
+            icon={<FiCalendar />}
+            collapsed={collapsed}
+            label="Calendario"
+          />
+          <SidebarLink
+            href="/dashboard/schedule"
+            icon={<FiClock />}
+            collapsed={collapsed}
+            label="Cronograma"
+          />
+          <SidebarLink
+            href="/dashboard/activities"
+            icon={<FiCheckSquare />}
+            collapsed={collapsed}
+            label="Actividades Previas"
+          />
+
           <DropdownSection
             label="PAMEC"
             isOpen={openPamec}
             toggleOpen={() => setOpenPamec(!openPamec)}
             items={[
-              { label: "Autoevaluación", href: "/dashboard/pamec/self-assessment", icon: <FiEdit /> },
-              { label: "Selección Procesos", href: "/dashboard/pamec/selection", icon: <FiList /> },
-              { label: "Criterios Priorización", href: "/dashboard/pamec/criteria", icon: <FiFilter /> },
-              { label: "Matriz Priorización", href: "/dashboard/pamec/matrix", icon: <FiGrid /> },
-              { label: "Definición Calidad", href: "/dashboard/pamec/definition", icon: <FiCheckCircle /> },
-              { label: "Ficha Indicadores", href: "/dashboard/pamec/file", icon: <FiBarChart2 /> },
-              { label: "Medición Inicial", href: "/dashboard/pamec/measurement", icon: <FiTrendingUp /> },
-              { label: "Plan De Acción", href: "/dashboard/pamec/plan", icon: <FiClipboard /> },
-              { label: "Seguimiento", href: "/dashboard/pamec/follow-up", icon: <FiEye /> },
-              { label: "Evaluación", href: "/dashboard/pamec/assessment", icon: <FiAward /> },
-              { label: "Aprendizaje", href: "/dashboard/pamec/learning", icon: <FiBookOpen /> },
+              {
+                label: "Autoevaluación",
+                href: "/dashboard/pamec/self-assessment",
+                icon: <FiCheckCircle />,
+              },
+              {
+                label: "Selección Procesos",
+                href: "/dashboard/pamec/selection",
+                icon: <FiList />,
+              },
+              {
+                label: "Criterios Priorización",
+                href: "/dashboard/pamec/criteria",
+                icon: <FiSliders />,
+              },
+              {
+                label: "Matriz Priorización",
+                href: "/dashboard/pamec/matrix",
+                icon: <FiGrid />,
+              },
+              {
+                label: "Definición Calidad",
+                href: "/dashboard/pamec/definition",
+                icon: <FiCheckCircle />,
+              },
+              {
+                label: "Ficha Indicadores",
+                href: "/dashboard/pamec/file",
+                icon: <FiBarChart2 />,
+              },
+              {
+                label: "Medición Inicial",
+                href: "/dashboard/pamec/measurement",
+                icon: <FiActivity />,
+              },
+              {
+                label: "Plan De Acción",
+                href: "/dashboard/pamec/plan",
+                icon: <FiClipboard />,
+              },
+              {
+                label: "Seguimiento",
+                href: "/dashboard/pamec/follow-up",
+                icon: <FiTrendingUp />,
+              },
+              {
+                label: "Evaluación",
+                href: "/dashboard/pamec/assessment",
+                icon: <FiAward />,
+              },
+              {
+                label: "Aprendizaje",
+                href: "/dashboard/pamec/learning",
+                icon: <FiBookOpen />,
+              },
             ]}
+            collapsed={collapsed}
           />
 
-          {/* INFORMES */}
           <DropdownSection
             label="Informes"
             isOpen={openInforme}
             toggleOpen={() => setOpenInforme(!openInforme)}
             items={[
-              { label: "Procesos", href: "/dashboard/report/processes", icon: <FiGitBranch /> },
-              { label: "Grupo Estándar", href: "/dashboard/report/cluster", icon: <FiUsers /> },
-              { label: "Oportunidad Mejora", href: "/dashboard/report/chance", icon: <FiZap /> },
-              { label: "Nivel De Ejecución", href: "/dashboard/report/level", icon: <FiBarChart /> },
+              {
+                label: "Analisis",
+                href: "/dashboard/reports/self-assessment",
+                icon: <FiCheckCircle />,
+              },
             ]}
+            collapsed={collapsed}
           />
 
-          <SidebarLink href="/dashboard/users" icon={<FiUsers />}>Usuarios</SidebarLink>
-          <SidebarLink href="/dashboard/about" icon={<FiInfo />}>Acerca de</SidebarLink>
+          <SidebarLink
+            href="/dashboard/users"
+            icon={<FiUsers />}
+            collapsed={collapsed}
+            label="Usuarios"
+          />
+          <SidebarLink
+            href="/dashboard/about"
+            icon={<FiInfo />}
+            collapsed={collapsed}
+            label="Acerca de"
+          />
         </nav>
       </div>
 
-      {/* Botón de salida */}
+      {/* Logout */}
       <div className="mt-6">
         <button
           onClick={handleLogout}
-          className="flex items-center gap-2 w-full px-3 py-2 rounded-lg hover:bg-verdeClaro/90 transition-colors duration-200 text-sm font-nunito text-white"
+          className={[
+            "flex items-center gap-2 w-full px-3 py-2 rounded-lg transition-colors duration-200 text-sm",
+            collapsed
+              ? "justify-center hover:bg-white/10"
+              : "hover:bg-white/10",
+          ].join(" ")}
+          title="Cerrar sesión"
         >
           <FiLogOut className="text-lg" />
-          Cerrar sesión
+          {!collapsed && <span>Cerrar sesión</span>}
         </button>
       </div>
     </aside>
   );
 }
 
-function SidebarLink({ href, icon, children }: { href: string; icon: React.ReactNode; children: React.ReactNode }) {
+/* ---------- Subcomponentes ---------- */
+
+function SidebarLink({
+  href,
+  icon,
+  label,
+  collapsed,
+}: {
+  href: string;
+  icon: React.ReactNode;
+  label: string;
+  collapsed: boolean;
+}) {
+  const pathname = usePathname();
+  const active = pathname === href;
+
   return (
     <Link
       href={href}
-      className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-verdeClaro/90 transition-colors duration-200 text-sm font-medium text-white"
+      className={[
+        "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors duration-200 text-sm",
+        active
+          ? "bg-white text-[#2C5959] font-nunito"
+          : "text-white hover:bg-white/10",
+        collapsed ? "justify-center" : "",
+      ].join(" ")}
+      aria-current={active ? "page" : undefined}
+      title={collapsed ? label : undefined}
     >
       <span className="text-lg">{icon}</span>
-      <span>{children}</span>
+      {!collapsed && <span>{label}</span>}
     </Link>
   );
 }
@@ -140,35 +281,57 @@ function DropdownSection({
   isOpen,
   toggleOpen,
   items,
+  collapsed,
 }: {
   label: string;
   isOpen: boolean;
   toggleOpen: () => void;
   items: { label: string; href: string; icon: React.ReactNode }[];
+  collapsed: boolean;
 }) {
+  const onKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      toggleOpen();
+    }
+  };
+
   return (
     <div>
       <button
         onClick={toggleOpen}
-        className="flex items-center justify-between w-full px-3 py-2 rounded-lg hover:bg-verdeClaro/90 transition-colors duration-200 text-sm font-medium text-white"
+        onKeyDown={onKeyDown}
+        className={[
+          "flex items-center justify-between w-full px-3 py-2 rounded-lg transition-colors duration-200 text-sm hover:bg-white/10",
+          collapsed ? "justify-center" : "",
+        ].join(" ")}
         aria-expanded={isOpen}
+        aria-controls={`section-${label}`}
+        title={
+          collapsed ? `${label} (expande el menú para ver opciones)` : undefined
+        }
       >
         <span className="flex items-center gap-2">
-          <FiChevronDown className={`transition-transform ${isOpen ? "rotate-180" : ""}`} />
-          {label}
+          <FiChevronDown
+            className={`transition-transform ${
+              isOpen && !collapsed ? "rotate-180" : ""
+            }`}
+          />
+          {!collapsed && <span>{label}</span>}
         </span>
       </button>
-      {isOpen && (
-        <div className="ml-6 mt-2 space-y-1">
+
+      {/* Cuando está colapsado, no se listan los hijos para mantener el UI limpio */}
+      {!collapsed && isOpen && (
+        <div id={`section-${label}`} className="ml-6 mt-2 space-y-1">
           {items.map((item) => (
-            <Link
+            <SidebarLink
               key={item.href}
               href={item.href}
-              className="flex items-center gap-2 px-3 py-1 rounded-lg text-sm text-white hover:bg-verdeClaro/70 transition"
-            >
-              <span className="text-lg">{item.icon}</span>
-              <span>{item.label}</span>
-            </Link>
+              icon={item.icon}
+              label={item.label}
+              collapsed={false}
+            />
           ))}
         </div>
       )}

@@ -29,7 +29,7 @@ export default function ActivitiesPage() {
     <div className="p-6 font-nunito">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-[#2A5559] tracking-tight">
+          <h1 className="text-2xl font-nunito text-[#2A5559] tracking-tight">
             Actividades Previas
           </h1>
           <p className="text-sm text-gray-500">
@@ -84,7 +84,7 @@ export default function ActivitiesPage() {
           title="Eliminar actividad"
           description={
             <>
-              ¿Eliminar <span className="font-semibold">{confirmDel.name}</span>
+              ¿Eliminar <span className="font-nunito">{confirmDel.name}</span>
               ? Esta acción no se puede deshacer.
             </>
           }

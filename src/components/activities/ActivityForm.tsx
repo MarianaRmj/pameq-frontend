@@ -161,7 +161,7 @@ export function ActivityForm({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div className="relative w-full max-w-4xl overflow-hidden rounded-2xl bg-gradient-to-br from-white to-gray-50 shadow-2xl ring-1 ring-gray-200 font-nunito">
         <div className="flex items-center justify-between border-b border-gray-200/70 px-6 py-4">
-          <h2 className="text-lg font-semibold text-[#2A5559] tracking-tight">
+          <h2 className="text-lg font-nunito text-[#2A5559] tracking-tight">
             {mode === "edit" ? "Editar actividad" : "Nueva actividad"}
           </h2>
           <button
@@ -429,7 +429,7 @@ function Section({
 }) {
   return (
     <fieldset className="rounded-xl border border-gray-200/70 bg-white/60 p-4 shadow-sm">
-      <legend className="px-2 text-xs font-semibold uppercase tracking-wide text-[#2A5559]">
+      <legend className="px-2 text-xs font-nunito uppercase tracking-wide text-[#2A5559]">
         {title}
       </legend>
       {children}

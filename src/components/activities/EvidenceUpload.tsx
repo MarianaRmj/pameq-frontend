@@ -53,7 +53,7 @@ export function EvidenceUpload({
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b px-5 py-3">
-          <h3 className="text-lg font-semibold text-[#2A5559]">
+          <h3 className="text-lg font-nunito text-[#2A5559]">
             Adjuntar evidencias
           </h3>
           <button

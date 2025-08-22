@@ -92,7 +92,7 @@
 
   /* Tabla: evita usar arbitrary values dentro de @apply */
   .ui-table-head {
-    @apply grid bg-gray-50/80 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-600;
+    @apply grid bg-gray-50/80 px-4 py-3 text-xs font-nunito uppercase tracking-wide text-gray-600;
     grid-template-columns: 4fr 2.8fr 1.8fr 2fr 1.4fr 1.6fr; /* antes: grid-cols-[...] */
   }
   .ui-table-row {
