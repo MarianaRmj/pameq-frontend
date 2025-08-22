@@ -40,7 +40,7 @@ export default function ActivitiesPage() {
           onClick={() => setOpenCreate(true)}
           className="bg-verdeOscuro text-white px-2 py-1 rounded hover:bg-verdeClaro transition"
         >
-          ➕ Nueva actividad
+           + Nueva actividad
         </button>
       </div>
 

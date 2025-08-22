@@ -122,20 +122,19 @@ export default function CalendarioEventos() {
   return (
     <div className="max-w-5xl mx-auto mt-8 animate-fade-in-up">
       <div className="bg-white rounded-2xl shadow-2xl p-6 border border-verdeSuave relative">
-        <h2 className="text-2xl font-nunito text-[#2C5959] mb-2 flex items-center gap-2">
+        <h2 className="text-2xl font-nunito text-[#2C5959] mb-1 flex items-center">
           <svg
-            className="h-7 w-7 text-verdeClaro"
+            className="h-1  text-verdeOscuro"
             fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            viewBox="0 0 24 24"
+            strokeWidth="1"
+            viewBox="0 0 14 14"
           >
             <path d="M8 7V3M16 7V3M4 11H20M4 19H20M4 15H20" />
           </svg>
           Calendario Institucional
         </h2>
         <p className="text-base text-gray-500 mb-4">
-          Agenda tus actividades, reuniones y ciclos aquí.
+          Agenda tus actividades, reuniones y eventos aquí.
         </p>
 
         <div className="overflow-x-auto">

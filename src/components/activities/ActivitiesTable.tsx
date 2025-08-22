@@ -27,37 +27,37 @@ export function ActivitiesTable({
       {/* Head */}
       <div className={`${COLS} bg-verdeOscuro/95 text-white`}>
         <div
-          className={`ui-th p-0${CELL} text-[11px] font-nunito uppercase tracking-wide`}
+          className={`ui-th ${CELL} text-xs font-nunito  tracking-wide`}
         >
           Actividad
         </div>
         <div
-          className={`ui-th p-0 ${CELL} text-[11px] font-nunito uppercase tracking-wide`}
+          className={`ui-th ${CELL} text-xs font-nunito  tracking-wide`}
         >
           Fechas
         </div>
         <div
-          className={`ui-th p-0 ${CELL} text-[11px] font-nunito uppercase tracking-wide`}
+          className={`ui-th ${CELL} text-xs font-nunito  tracking-wide`}
         >
           Responsable
         </div>
         <div
-          className={`ui-th p-0 ${CELL} text-[11px] font-nunito uppercase tracking-wide`}
+          className={`ui-th ${CELL} text-xs font-nunito  tracking-wide`}
         >
           Procesos
         </div>
         <div
-          className={`ui-th p-0 ${CELL} text-center text-[11px] font-nunito uppercase tracking-wide`}
+          className={`ui-th ${CELL} text-xs font-nunito  tracking-wide`}
         >
           Evidencias
         </div>
         <div
-          className={`ui-th p-0 ${CELL} text-right text-[11px] font-nunito uppercase tracking-wide`}
+          className={`ui-th ${CELL} text-xs font-nunito  tracking-wide`}
         >
           Estado
         </div>
         <div
-          className={`ui-th p-0 ${CELL} text-right text-[11px] font-nunito uppercase tracking-wide`}
+          className={`ui-th ${CELL} text-xs font-nunito  tracking-wide`}
         >
           Acciones
         </div>

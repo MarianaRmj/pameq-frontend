@@ -170,7 +170,7 @@ export const SedesTable = () => {
           onClick={() => setIsCreateOpen(true)}
           className="bg-verdeOscuro text-white font-nunito px-2 py-1 rounded hover:bg-verdeClaro transition"
         >
-          ➕ Nueva Sede
+           + Nueva Sede
         </button>
       </div>
       <div className="overflow-x-auto">

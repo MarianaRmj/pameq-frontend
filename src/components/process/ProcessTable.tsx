@@ -168,7 +168,7 @@ export const ProcessTable = () => {
           onClick={() => setIsCreateOpen(true)}
           className="bg-verdeOscuro text-white font-nunito px-2 py-1 rounded hover:bg-verdeClaro transition"
         >
-          ➕ Nuevo Proceso
+          + Nuevo Proceso
         </button>
       </div>
 
