@@ -61,7 +61,7 @@ export default function Sidebar() {
             />
             {!collapsed && (
               <div className="leading-tight">
-                <h1 className="text-base font-bold tracking-wide">PAMEQ</h1>
+                <h1 className="text-base font-nunito tracking-wide">PAMEQ</h1>
                 <p className="text-xs text-neutral-300">IPS Colombia</p>
               </div>
             )}

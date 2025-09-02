@@ -145,7 +145,7 @@ export default function SchedulePage() {
           <Tab
             label="Tabla"
             sx={{
-              fontWeight: "bold",
+              fontWeight: "nunito",
               color: "#2C5959",
               fontFamily: "Nunito, sans-serif",
             }}
@@ -153,7 +153,7 @@ export default function SchedulePage() {
           <Tab
             label="Diagrama Gantt"
             sx={{
-              fontWeight: "bold",
+              fontWeight: "nunito",
               color: "#2C5959",
               fontFamily: "Nunito, sans-serif",
             }}
