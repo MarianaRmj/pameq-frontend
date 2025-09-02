@@ -129,7 +129,7 @@ export default function ModernGanttChart({
       headStyles: {
         fillColor: [44, 89, 89],
         textColor: 255,
-        fontStyle: "bold",
+        fontStyle: "nunito",
       },
       alternateRowStyles: { fillColor: [232, 247, 236] },
       theme: "striped",

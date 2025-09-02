@@ -473,7 +473,7 @@ export default function ScheduleTable({
                 },
                 ".MuiDataGrid-columnHeaderTitle": {
                   color: "#000 !important",
-                  fontWeight: "bold",
+                  fontWeight: "nunito",
                   fontSize: "1rem",
                   fontFamily: "Nunito, sans-serif",
                 },
