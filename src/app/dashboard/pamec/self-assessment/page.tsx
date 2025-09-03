@@ -4,54 +4,102 @@ import { useEffect, useState } from "react";
 import AutoevaluacionHoja from "@/components/pamec/AutoevaluacionHoja";
 import { api } from "@/app/lib/api";
 
-export default function AutoevaluacionPage() {
-  const autoevaluacionId = 1; // Temporal
-  const [estandares, setEstandares] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+type Estandar = {
+  id?: number;
+  estandarId?: number;
+  grupo: string;
+  codigo: string;
+  descripcion: string;
+  criterios: string[];
+};
 
+export default function AutoevaluacionPage() {
+  const autoevaluacionId = 1;
+  const [estandares, setEstandares] = useState<Estandar[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  // 🧠 Cargar datos desde backend
   useEffect(() => {
-    (async () => {
+    const load = async () => {
       try {
-        setLoading(true);
-        const data = await api<any[]>(
+        const data = await api<Estandar[]>(
           `/evaluacion/autoevaluaciones/${autoevaluacionId}/estandares-completo`
         );
-        console.log("📦 Estandares recibidos:", data);
         setEstandares(data);
-      } catch (e: any) {
-        console.error("❌ Error al cargar estándares:", e);
-        setError("No fue posible cargar los estándares.");
+        setCurrentIndex(0); // inicializa siempre en la primera
+      } catch (error) {
+        console.error("Error cargando estándares:", error);
       } finally {
         setLoading(false);
       }
-    })();
-  }, [autoevaluacionId]);
+    };
+    load();
+  }, []);
+
+  // ⌨️ Soporte para flechas ← →
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight") next();
+      if (e.key === "ArrowLeft") prev();
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [currentIndex, estandares.length]);
+
+  const next = () =>
+    setCurrentIndex((prev) => Math.min(prev + 1, estandares.length - 1));
+  const prev = () => setCurrentIndex((prev) => Math.max(prev - 1, 0));
+
+  const actual = estandares[currentIndex];
+
+  if (loading) return <p className="p-8">Cargando estándares...</p>;
+  if (!estandares.length)
+    return <p className="p-8 text-red-600">No hay estándares disponibles.</p>;
 
   return (
-    <div className="py-4 px-2 max-w-6xl mx-auto">
-      <h1 className="text-3xl font-nunito text-verdeOscuro mb-2">
-        Autoevaluación por Estándares
+    <div className="max-w-6xl mx-auto px-4 py-10 font-nunito">
+      {/* 🏷️ TÍTULO PRINCIPAL */}
+      <h1 className="text-3xl font-nunito text-verdeOscuro mb-6 text-center">
+        Autoevaluación de Estándares
       </h1>
 
-      <p className="text-gray-700 font-nunito mb-6">
-        A continuación se presenta una hoja por cada estándar con sus
-        respectivos criterios y aspectos a calificar.
-      </p>
-
-      {loading && <p className="text-gray-500">Cargando estándares...</p>}
-      {error && <p className="text-red-600">{error}</p>}
-
-      {!loading &&
-        !error &&
-        estandares.map((est: any) => (
-
-          <AutoevaluacionHoja
-            key={est.id ?? est.estandarId}
-            estandar={est}
-            autoevaluacionId={autoevaluacionId}
+      {/* 📊 Barra de progreso */}
+      <div className="mb-6">
+        <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-verdeOscuro transition-all duration-300"
+            style={{
+              width: `${((currentIndex + 1) / estandares.length) * 100}%`,
+            }}
           />
-        ))}
+        </div>
+      </div>
+
+      {/* 🧾 Hoja actual */}
+      <AutoevaluacionHoja
+        estandar={actual}
+        autoevaluacionId={autoevaluacionId}
+      />
+
+      {/* 🔘 Botones navegación */}
+      <div className="flex justify-between mt-4 max-w-5xl mx-auto px-2">
+        <button
+          onClick={prev}
+          disabled={currentIndex === 0}
+          className="bg-gray-200 px-4 py-1 rounded-lg hover:bg-gray-300 disabled:opacity-40"
+        >
+          ← Anterior
+        </button>
+
+        <button
+          onClick={next}
+          disabled={currentIndex === estandares.length - 1}
+          className="bg-verdeOscuro text-white px-4 py-1 rounded-lg hover:bg-verdeClaro disabled:opacity-40"
+        >
+          Siguiente →
+        </button>
+      </div>
     </div>
   );
 }

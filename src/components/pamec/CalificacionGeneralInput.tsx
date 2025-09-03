@@ -7,7 +7,7 @@ export default function CalificacionGeneralInput({
 }) {
   return (
     <div className="mb-4">
-      <label className="block text-gray-800 font-medium text-sm mb-2">
+      <label className="block text-gray-800 font-nunito text-md mb-2">
         Calificación General
       </label>
       <input

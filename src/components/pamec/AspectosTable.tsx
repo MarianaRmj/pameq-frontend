@@ -7,7 +7,7 @@ type Props = {
 
 export const AspectosTable = ({ aspectos, setAspectos }: Props) => {
   return (
-    <div className="mb-6">
+    <div className="font-nunito mb-6">
       <div className="overflow-x-auto rounded-lg border border-gray-400">
         <table className="w-full text-sm text-left border-collapse">
           <tbody>

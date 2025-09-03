@@ -9,15 +9,14 @@ import { AspectosTable } from "./AspectosTable";
 import { api } from "@/app/lib/api";
 
 type Aspecto = { grupo: string; nombre: string; valor?: number | string };
+
 type Estandar = {
   id?: number;
   estandarId?: number;
   grupo: string;
   codigo: string;
-  numero: string | number;
   descripcion: string;
-  criterios: string[];
-  aspectos?: Aspecto[];
+  criterios: string[]; // ← array
 };
 
 export default function AutoevaluacionHoja({
@@ -37,84 +36,33 @@ export default function AutoevaluacionHoja({
 
   // 🚀 Precarga de datos ya guardados (modo edición)
   useEffect(() => {
-    if (!estandarId) return;
-
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-
-        const [calificacion, cualitativa] = await Promise.all([
-          api<any>(`/evaluacion/estandares/${estandarId}/calificaciones`),
-          api<any>(
-            `/evaluacion/estandares/${estandarId}/evaluacion-cualitativa`
-          ),
-        ]);
-
-        const baseAspectos = (estandar.aspectos || []).map((a) => {
-          let valor = "";
-
-          switch (a.nombre) {
-            case "SISTEMATICIDAD Y AMPLITUD":
-              valor = calificacion?.sistematicidad ?? "";
-              break;
-            case "PROACTIVIDAD":
-              valor = calificacion?.proactividad ?? "";
-              break;
-            case "CICLOS DE EVALUACIÓN Y MEJORAMIENTO":
-              valor = calificacion?.ciclo_evaluacion ?? "";
-              break;
-            case "DESPLIEGUE A LA INSTITUCIÓN":
-              valor = calificacion?.despliegue_institucion ?? "";
-              break;
-            case "DESPLIEGUE AL CLIENTE INTERNO Y/O EXTERNO":
-              valor = calificacion?.despliegue_cliente ?? "";
-              break;
-            case "PERTINENCIA":
-              valor = calificacion?.pertinencia ?? "";
-              break;
-            case "CONSISTENCIA":
-              valor = calificacion?.consistencia ?? "";
-              break;
-            case "AVANCE A LA MEDICIÓN":
-              valor = calificacion?.avance_medicion ?? "";
-              break;
-            case "TENDENCIA":
-              valor = calificacion?.tendencia ?? "";
-              break;
-            case "COMPARACIÓN":
-              valor = calificacion?.comparacion ?? "";
-              break;
-          }
-
-          return { ...a, valor };
-        });
-
-        setAspectos(baseAspectos);
-
-        setFortalezas(
-          Array.isArray(cualitativa?.fortalezas)
-            ? cualitativa.fortalezas
-            : JSON.parse(cualitativa?.fortalezas ?? '[""]')
-        );
-
-        setOportunidades(
-          Array.isArray(cualitativa?.oportunidades_mejora)
-            ? cualitativa.oportunidades_mejora
-            : JSON.parse(cualitativa?.oportunidades_mejora ?? '[""]')
-        );
-      } catch (err) {
-        console.error(
-          "❌ Error precargando datos del estándar",
-          estandarId,
-          err
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [estandarId, estandar.aspectos]);
+    if (!estandar) return;
+    setAspectos([
+      { nombre: "SISTEMATICIDAD Y AMPLITUD", valor: "", grupo: estandar.grupo },
+      { nombre: "PROACTIVIDAD", valor: "", grupo: estandar.grupo },
+      {
+        nombre: "CICLOS DE EVALUACIÓN Y MEJORAMIENTO",
+        valor: "",
+        grupo: estandar.grupo,
+      },
+      {
+        nombre: "DESPLIEGUE A LA INSTITUCIÓN",
+        valor: "",
+        grupo: estandar.grupo,
+      },
+      {
+        nombre: "DESPLIEGUE AL CLIENTE INTERNO Y/O EXTERNO",
+        valor: "",
+        grupo: estandar.grupo,
+      },
+      { nombre: "PERTINENCIA", valor: "", grupo: estandar.grupo },
+      { nombre: "CONSISTENCIA", valor: "", grupo: estandar.grupo },
+      { nombre: "AVANCE A LA MEDICIÓN", valor: "", grupo: estandar.grupo },
+      { nombre: "TENDENCIA", valor: "", grupo: estandar.grupo },
+      { nombre: "COMPARACIÓN", valor: "", grupo: estandar.grupo },
+    ]);
+    setLoading(false);
+  }, [estandar]);
 
   const get = (nombre: string): number => {
     const asp = aspectos.find((a) => a.nombre === nombre);
@@ -223,12 +171,15 @@ export default function AutoevaluacionHoja({
 
   return (
     <div className="p-8 border border-gray-200 rounded-2xl bg-white shadow-lg mb-10 max-w-5xl mx-auto font-nunito">
-      <h2 className="text-2xl font-bold text-verdeOscuro mb-2">
+      <h2 className="text-2xl font-nunito text-verdeOscuro  mb-2">
         {estandar.grupo} - {estandar.codigo}
       </h2>
-      <h3 className="text-sm text-black font-nunito text-justify mb-4 leading-relaxed">
-        Estándar {estandar.numero}: {estandar.descripcion}
-      </h3>
+
+      {estandar.descripcion && (
+        <p className="text-gray-700 mb-4 text-justify text-sm whitespace-pre-line leading-relaxed">
+          {estandar.descripcion}
+        </p>
+      )}
 
       {loading ? (
         <p className="text-gray-500">Cargando datos guardados...</p>
@@ -258,7 +209,7 @@ export default function AutoevaluacionHoja({
             <button
               onClick={guardarHoja}
               disabled={saving}
-              className="bg-verdeOscuro disabled:opacity-60 text-white px-8 py-2.5 rounded-lg shadow hover:bg-verdeClaro transition"
+              className="bg-verdeOscuro disabled:opacity-60 text-white px-6 py-1 rounded-lg shadow hover:bg-verdeClaro transition"
             >
               {saving ? "Guardando..." : "Guardar Hoja"}
             </button>

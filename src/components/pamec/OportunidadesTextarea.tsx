@@ -9,7 +9,7 @@ export default function OportunidadesTextarea({
 }) {
   return (
     <div className="mb-4">
-      <label className="block text-gray-800 font-normal text-sm mb-3">
+      <label className="block text-gray-800 font-normal text-md mb-3">
         Oportunidades de Mejora
       </label>
       {oportunidades.map((o, i) => (
