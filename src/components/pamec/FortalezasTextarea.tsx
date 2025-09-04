@@ -30,7 +30,7 @@ export default function FortalezasTextarea({
         onClick={() => setFortalezas([...fortalezas, ""])}
         className="text-verdeOscuro text-sm font-semibold hover:text-verdeClaro transition"
       >
-        + Agregar otra fortaleza
+        + Agregar
       </button>
     </div>
   );

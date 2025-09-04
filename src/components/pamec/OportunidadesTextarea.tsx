@@ -9,7 +9,7 @@ export default function OportunidadesTextarea({
 }) {
   return (
     <div className="mb-4">
-      <label className="block text-gray-800 font-normal text-md mb-3">
+      <label className="block text-gray-800 font-nunito text-md mb-3">
         Oportunidades de Mejora
       </label>
       {oportunidades.map((o, i) => (
@@ -30,7 +30,7 @@ export default function OportunidadesTextarea({
         onClick={() => setOportunidades([...oportunidades, ""])}
         className="text-verdeOscuro text-sm font-semibold hover:text-verdeClaro transition"
       >
-        + Agregar otra oportunidad
+        + Agregar
       </button>
     </div>
   );

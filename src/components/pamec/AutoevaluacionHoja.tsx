@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import CalificacionGeneralInput from "./CalificacionGeneralInput";
 import CriteriosToggle from "./CriteriosToggle";
 import FortalezasTextarea from "./FortalezasTextarea";
@@ -9,6 +9,15 @@ import { AspectosTable } from "./AspectosTable";
 import { api } from "@/app/lib/api";
 
 type Aspecto = { grupo: string; nombre: string; valor?: number | string };
+
+type Evidencia = {
+  id: number;
+  nombre: string;
+  url: string;
+  fecha_carga?: string;
+  nombre_archivo?: string;
+  url_archivo?: string;
+};
 
 type Estandar = {
   id?: number;
@@ -33,6 +42,67 @@ export default function AutoevaluacionHoja({
   const [mostrarCriterios, setMostrarCriterios] = useState(true);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  const [evidencias, setEvidencias] = useState<Evidencia[]>([]);
+  const uploadingRef = useRef(false);
+
+  const subirEvidencias = async (files: FileList | null) => {
+    if (!files) return;
+    uploadingRef.current = true;
+
+    const newEvidencias: Evidencia[] = [];
+
+    for (const file of Array.from(files)) {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("autoevaluacionId", String(autoevaluacionId));
+      formData.append("estandarId", String(estandarId));
+
+      try {
+        const res = await fetch(
+          "http://localhost:3001/evidencia-fortaleza/evidencias/fortalezas",
+          {
+            method: "POST",
+            body: formData,
+          }
+        );
+
+        const text = await res.text();
+        console.log("🔍 Respuesta cruda del backend:", text);
+
+        let data: unknown = {};
+        try {
+          data = JSON.parse(text);
+        } catch (err) {
+          console.error("❌ No se pudo parsear JSON:", err);
+        }
+
+        if (Array.isArray(data)) {
+          const nuevas = data.map(
+            (ev: {
+              id: number;
+              nombre_archivo: string;
+              url_archivo: string;
+              fecha_carga?: string;
+            }) => ({
+              id: ev.id,
+              nombre: ev.nombre_archivo,
+              url: ev.url_archivo,
+              fecha_carga: ev.fecha_carga,
+            })
+          );
+          newEvidencias.push(...nuevas);
+        } else {
+          console.warn("❌ Respuesta inesperada:", data);
+        }
+      } catch (error) {
+        console.error("Error subiendo archivo", error);
+      }
+    }
+
+    setEvidencias((prev) => [...prev, ...newEvidencias]);
+    uploadingRef.current = false;
+  };
 
   // 🚀 Precarga de datos ya guardados (modo edición)
   useEffect(() => {
@@ -63,6 +133,31 @@ export default function AutoevaluacionHoja({
     ]);
     setLoading(false);
   }, [estandar]);
+
+  useEffect(() => {
+    const cargarEvidencias = async () => {
+      try {
+        const res = await fetch(
+          `http://localhost:3001/evidencia-fortaleza/estandares/${estandarId}/evidencias-fortalezas`
+        );
+        const data = await res.json();
+
+        if (Array.isArray(data)) {
+          const precargadas = data.map((ev: Evidencia) => ({
+            id: ev.id,
+            nombre: ev.nombre_archivo ?? "",
+            url: ev.url_archivo ?? "",
+            fecha_carga: ev.fecha_carga ?? "",
+          }));
+          setEvidencias(precargadas);
+        }
+      } catch (error) {
+        console.error("❌ Error cargando evidencias previas:", error);
+      }
+    };
+
+    cargarEvidencias();
+  }, [autoevaluacionId, estandarId]);
 
   const get = (nombre: string): number => {
     const asp = aspectos.find((a) => a.nombre === nombre);
@@ -202,6 +297,69 @@ export default function AutoevaluacionHoja({
             oportunidades={oportunidades}
             setOportunidades={setOportunidades}
           />
+
+          {/* 📎 Subir evidencias de fortalezas */}
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Evidencias de fortalezas (PDF, Word, Imágenes)
+            </label>
+            <input
+              type="file"
+              multiple
+              accept=".pdf,.doc,.docx,.jpg,.png,.jpeg"
+              className="block w-full text-sm text-gray-600 file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-verdeClaro file:text-white hover:file:bg-verdeOscuro"
+              onChange={(e) => subirEvidencias(e.target.files)}
+            />
+
+            {/* Mostrar archivos ya subidos */}
+            {evidencias.length > 0 && (
+              <ul className="mt-3 space-y-1 text-sm text-verdeOscuro">
+                {evidencias.map((ev, idx) => (
+                  <li key={idx} className="flex items-center justify-between">
+                    <span>
+                      📄{" "}
+                      <a
+                        href={ev.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline"
+                      >
+                        {ev.nombre}
+                      </a>
+                    </span>
+                    <button
+                      onClick={async () => {
+                        const confirmar = confirm(
+                          "¿Deseas eliminar esta evidencia?"
+                        );
+                        if (!confirmar) return;
+
+                        try {
+                          const res = await fetch(
+                            `http://localhost:3001/evidencia-fortaleza/evidencias/${ev.id}`,
+                            { method: "DELETE" }
+                          );
+
+                          if (res.ok) {
+                            setEvidencias((prev) =>
+                              prev.filter((e) => e.id !== ev.id)
+                            );
+                          } else {
+                            alert("❌ Error eliminando evidencia");
+                          }
+                        } catch (err) {
+                          console.error("❌ Error eliminando:", err);
+                        }
+                      }}
+                      className="text-red-600 text-xs ml-4 hover:underline"
+                    >
+                      x
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
 
           <AspectosTable aspectos={aspectos} setAspectos={setAspectos} />
 

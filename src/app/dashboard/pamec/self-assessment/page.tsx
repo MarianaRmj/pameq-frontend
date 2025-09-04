@@ -87,9 +87,9 @@ export default function AutoevaluacionPage() {
         <button
           onClick={prev}
           disabled={currentIndex === 0}
-          className="bg-gray-200 px-4 py-1 rounded-lg hover:bg-gray-300 disabled:opacity-40"
+          className="bg-verdeOscuro text-white px-4 py-1 rounded-lg hover:bg-verdeClaro disabled:opacity-40"
         >
-          ← Anterior
+          Anterior
         </button>
 
         <button
@@ -97,7 +97,7 @@ export default function AutoevaluacionPage() {
           disabled={currentIndex === estandares.length - 1}
           className="bg-verdeOscuro text-white px-4 py-1 rounded-lg hover:bg-verdeClaro disabled:opacity-40"
         >
-          Siguiente →
+          Siguiente
         </button>
       </div>
     </div>
