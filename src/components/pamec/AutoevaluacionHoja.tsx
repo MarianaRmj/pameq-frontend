@@ -3,8 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import CalificacionGeneralInput from "./CalificacionGeneralInput";
 import CriteriosToggle from "./CriteriosToggle";
-import FortalezasTextarea from "./FortalezasTextarea";
-import OportunidadesTextarea from "./OportunidadesTextarea";
+import QualitativeList from "./QualitativeList";
 import { AspectosTable } from "./AspectosTable";
 import { api } from "@/app/lib/api";
 
@@ -104,60 +103,192 @@ export default function AutoevaluacionHoja({
     uploadingRef.current = false;
   };
 
-  // 🚀 Precarga de datos ya guardados (modo edición)
   useEffect(() => {
-    if (!estandar) return;
-    setAspectos([
-      { nombre: "SISTEMATICIDAD Y AMPLITUD", valor: "", grupo: estandar.grupo },
-      { nombre: "PROACTIVIDAD", valor: "", grupo: estandar.grupo },
-      {
-        nombre: "CICLOS DE EVALUACIÓN Y MEJORAMIENTO",
-        valor: "",
-        grupo: estandar.grupo,
-      },
-      {
-        nombre: "DESPLIEGUE A LA INSTITUCIÓN",
-        valor: "",
-        grupo: estandar.grupo,
-      },
-      {
-        nombre: "DESPLIEGUE AL CLIENTE INTERNO Y/O EXTERNO",
-        valor: "",
-        grupo: estandar.grupo,
-      },
-      { nombre: "PERTINENCIA", valor: "", grupo: estandar.grupo },
-      { nombre: "CONSISTENCIA", valor: "", grupo: estandar.grupo },
-      { nombre: "AVANCE A LA MEDICIÓN", valor: "", grupo: estandar.grupo },
-      { nombre: "TENDENCIA", valor: "", grupo: estandar.grupo },
-      { nombre: "COMPARACIÓN", valor: "", grupo: estandar.grupo },
-    ]);
-    setLoading(false);
-  }, [estandar]);
+    if (!estandar || !estandarId) return;
 
-  useEffect(() => {
-    const cargarEvidencias = async () => {
+    const cargarDatos = async () => {
       try {
-        const res = await fetch(
-          `http://localhost:3001/evidencia-fortaleza/estandares/${estandarId}/evidencias-fortalezas`
-        );
-        const data = await res.json();
+        let calificacion = null;
+        try {
+          calificacion = await api(
+            `/evaluacion/estandares/${estandarId}/calificaciones`
+          );
+        } catch (err) {
+          console.warn(
+            "⚠️ No se encontró calificación guardada:",
+            err instanceof Error ? err.message : String(err)
+          );
+        }
 
-        if (Array.isArray(data)) {
-          const precargadas = data.map((ev: Evidencia) => ({
-            id: ev.id,
-            nombre: ev.nombre_archivo ?? "",
-            url: ev.url_archivo ?? "",
-            fecha_carga: ev.fecha_carga ?? "",
-          }));
-          setEvidencias(precargadas);
+        if (
+          calificacion &&
+          typeof calificacion === "object" &&
+          "sistematicidad" in calificacion
+        ) {
+          const cal = calificacion as {
+            sistematicidad: number | string;
+            proactividad: number | string;
+            ciclo_evaluacion: number | string;
+            despliegue_institucion: number | string;
+            despliegue_cliente: number | string;
+            pertinencia: number | string;
+            consistencia: number | string;
+            avance_medicion: number | string;
+            tendencia: number | string;
+            comparacion: number | string;
+          };
+          setAspectos([
+            {
+              nombre: "SISTEMATICIDAD Y AMPLITUD",
+              valor: cal.sistematicidad,
+              grupo: estandar.grupo,
+            },
+            {
+              nombre: "PROACTIVIDAD",
+              valor: cal.proactividad,
+              grupo: estandar.grupo,
+            },
+            {
+              nombre: "CICLOS DE EVALUACIÓN Y MEJORAMIENTO",
+              valor: cal.ciclo_evaluacion,
+              grupo: estandar.grupo,
+            },
+            {
+              nombre: "DESPLIEGUE A LA INSTITUCIÓN",
+              valor: cal.despliegue_institucion,
+              grupo: estandar.grupo,
+            },
+            {
+              nombre: "DESPLIEGUE AL CLIENTE INTERNO Y/O EXTERNO",
+              valor: cal.despliegue_cliente,
+              grupo: estandar.grupo,
+            },
+            {
+              nombre: "PERTINENCIA",
+              valor: cal.pertinencia,
+              grupo: estandar.grupo,
+            },
+            {
+              nombre: "CONSISTENCIA",
+              valor: cal.consistencia,
+              grupo: estandar.grupo,
+            },
+            {
+              nombre: "AVANCE A LA MEDICIÓN",
+              valor: cal.avance_medicion,
+              grupo: estandar.grupo,
+            },
+            {
+              nombre: "TENDENCIA",
+              valor: cal.tendencia,
+              grupo: estandar.grupo,
+            },
+            {
+              nombre: "COMPARACIÓN",
+              valor: cal.comparacion,
+              grupo: estandar.grupo,
+            },
+          ]);
+        } else {
+          // Si no hay calificación, usar vacíos
+          setAspectos([
+            {
+              nombre: "SISTEMATICIDAD Y AMPLITUD",
+              valor: "",
+              grupo: estandar.grupo,
+            },
+            { nombre: "PROACTIVIDAD", valor: "", grupo: estandar.grupo },
+            {
+              nombre: "CICLOS DE EVALUACIÓN Y MEJORAMIENTO",
+              valor: "",
+              grupo: estandar.grupo,
+            },
+            {
+              nombre: "DESPLIEGUE A LA INSTITUCIÓN",
+              valor: "",
+              grupo: estandar.grupo,
+            },
+            {
+              nombre: "DESPLIEGUE AL CLIENTE INTERNO Y/O EXTERNO",
+              valor: "",
+              grupo: estandar.grupo,
+            },
+            { nombre: "PERTINENCIA", valor: "", grupo: estandar.grupo },
+            { nombre: "CONSISTENCIA", valor: "", grupo: estandar.grupo },
+            {
+              nombre: "AVANCE A LA MEDICIÓN",
+              valor: "",
+              grupo: estandar.grupo,
+            },
+            { nombre: "TENDENCIA", valor: "", grupo: estandar.grupo },
+            { nombre: "COMPARACIÓN", valor: "", grupo: estandar.grupo },
+          ]);
+        }
+
+        // ✅ Cualitativa
+        try {
+          const cualitativa = await api(
+            `/evaluacion/estandares/${estandarId}/evaluacion-cualitativa?autoevaluacionId=${autoevaluacionId}`
+          );
+
+          if (
+            cualitativa &&
+            typeof cualitativa === "object" &&
+            "fortalezas" in cualitativa &&
+            "oportunidades_mejora" in cualitativa
+          ) {
+            setFortalezas(
+              (cualitativa as { fortalezas?: string[] }).fortalezas ?? [""]
+            );
+            setOportunidades(
+              (cualitativa as { oportunidades_mejora?: string[] })
+                .oportunidades_mejora ?? [""]
+            );
+          }
+        } catch (err) {
+          console.warn(
+            "⚠️ No se encontró evaluación cualitativa:",
+            typeof err === "object" && err !== null && "message" in err
+              ? (err as { message: string }).message
+              : String(err)
+          );
+        }
+
+        // ✅ Evidencias
+        try {
+          const res = await fetch(
+            `http://localhost:3001/evidencia-fortaleza/estandares/${estandarId}/evidencias-fortalezas`
+          );
+          const data = await res.json();
+          if (Array.isArray(data)) {
+            const precargadas = data.map((ev: Evidencia) => ({
+              id: ev.id ?? 0,
+              nombre: ev.nombre_archivo ?? "",
+              url: ev.url_archivo ?? "",
+              fecha_carga: ev.fecha_carga ?? "",
+              nombre_archivo: ev.nombre_archivo,
+              url_archivo: ev.url_archivo,
+            }));
+            setEvidencias(precargadas);
+          }
+        } catch (err) {
+          console.warn(
+            "⚠️ No se encontraron evidencias:",
+            typeof err === "object" && err !== null && "message" in err
+              ? (err as { message: string }).message
+              : String(err)
+          );
         }
       } catch (error) {
-        console.error("❌ Error cargando evidencias previas:", error);
+        console.error("❌ Error general cargando datos:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
-    cargarEvidencias();
-  }, [autoevaluacionId, estandarId]);
+    setLoading(true);
+    cargarDatos();
+  }, [estandar, estandarId]);
 
   const get = (nombre: string): number => {
     const asp = aspectos.find((a) => a.nombre === nombre);
@@ -288,19 +419,25 @@ export default function AutoevaluacionHoja({
 
           <CalificacionGeneralInput promedio={calificacionPromedio()} />
 
-          <FortalezasTextarea
-            fortalezas={fortalezas}
-            setFortalezas={setFortalezas}
-          />
+          {typeof estandarId === "number" && (
+            <>
+              <QualitativeList
+                tipo="fortalezas"
+                estandarId={estandarId}
+                autoevaluacionId={autoevaluacionId}
+              />
 
-          <OportunidadesTextarea
-            oportunidades={oportunidades}
-            setOportunidades={setOportunidades}
-          />
+              <QualitativeList
+                tipo="oportunidades"
+                estandarId={estandarId}
+                autoevaluacionId={autoevaluacionId}
+              />
+            </>
+          )}
 
           {/* 📎 Subir evidencias de fortalezas */}
           <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-gray-800 font-normal text-md mb-3">
               Evidencias de fortalezas (PDF, Word, Imágenes)
             </label>
             <input

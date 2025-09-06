@@ -12,7 +12,10 @@ export default function OportunidadesTextarea({
       <label className="block text-gray-800 font-nunito text-md mb-3">
         Oportunidades de Mejora
       </label>
-      {oportunidades.map((o, i) => (
+      {(Array.isArray(oportunidades) && oportunidades.length > 0
+        ? oportunidades
+        : [""]
+      ).map((o, i) => (
         <textarea
           key={i}
           value={o}
@@ -25,6 +28,7 @@ export default function OportunidadesTextarea({
           className="block border border-gray-300 rounded-lg px-4 py-2 w-full mb-3 text-sm focus:ring-2 focus:ring-verdeClaro focus:outline-none"
         />
       ))}
+
       <button
         type="button"
         onClick={() => setOportunidades([...oportunidades, ""])}
@@ -35,3 +39,5 @@ export default function OportunidadesTextarea({
     </div>
   );
 }
+
+
