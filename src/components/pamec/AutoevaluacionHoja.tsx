@@ -1,14 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import CalificacionGeneralInput from "./CalificacionGeneralInput";
 import CriteriosToggle from "./CriteriosToggle";
-import FortalezasTextarea from "./FortalezasTextarea";
-import OportunidadesTextarea from "./OportunidadesTextarea";
+import QualitativeList from "./QualitativeList";
 import { AspectosTable } from "./AspectosTable";
 import { api } from "@/app/lib/api";
 
 type Aspecto = { grupo: string; nombre: string; valor?: number | string };
+
+type Evidencia = {
+  id: number;
+  nombre: string;
+  url: string;
+  fecha_carga?: string;
+  nombre_archivo?: string;
+  url_archivo?: string;
+};
 
 type Estandar = {
   id?: number;
@@ -34,35 +42,253 @@ export default function AutoevaluacionHoja({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // 🚀 Precarga de datos ya guardados (modo edición)
+  const [evidencias, setEvidencias] = useState<Evidencia[]>([]);
+  const uploadingRef = useRef(false);
+
+  const subirEvidencias = async (files: FileList | null) => {
+    if (!files) return;
+    uploadingRef.current = true;
+
+    const newEvidencias: Evidencia[] = [];
+
+    for (const file of Array.from(files)) {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("autoevaluacionId", String(autoevaluacionId));
+      formData.append("estandarId", String(estandarId));
+
+      try {
+        const res = await fetch(
+          "http://localhost:3001/evidencia-fortaleza/evidencias/fortalezas",
+          {
+            method: "POST",
+            body: formData,
+          }
+        );
+
+        const text = await res.text();
+        console.log("🔍 Respuesta cruda del backend:", text);
+
+        let data: unknown = {};
+        try {
+          data = JSON.parse(text);
+        } catch (err) {
+          console.error("❌ No se pudo parsear JSON:", err);
+        }
+
+        if (Array.isArray(data)) {
+          const nuevas = data.map(
+            (ev: {
+              id: number;
+              nombre_archivo: string;
+              url_archivo: string;
+              fecha_carga?: string;
+            }) => ({
+              id: ev.id,
+              nombre: ev.nombre_archivo,
+              url: ev.url_archivo,
+              fecha_carga: ev.fecha_carga,
+            })
+          );
+          newEvidencias.push(...nuevas);
+        } else {
+          console.warn("❌ Respuesta inesperada:", data);
+        }
+      } catch (error) {
+        console.error("Error subiendo archivo", error);
+      }
+    }
+
+    setEvidencias((prev) => [...prev, ...newEvidencias]);
+    uploadingRef.current = false;
+  };
+
   useEffect(() => {
-    if (!estandar) return;
-    setAspectos([
-      { nombre: "SISTEMATICIDAD Y AMPLITUD", valor: "", grupo: estandar.grupo },
-      { nombre: "PROACTIVIDAD", valor: "", grupo: estandar.grupo },
-      {
-        nombre: "CICLOS DE EVALUACIÓN Y MEJORAMIENTO",
-        valor: "",
-        grupo: estandar.grupo,
-      },
-      {
-        nombre: "DESPLIEGUE A LA INSTITUCIÓN",
-        valor: "",
-        grupo: estandar.grupo,
-      },
-      {
-        nombre: "DESPLIEGUE AL CLIENTE INTERNO Y/O EXTERNO",
-        valor: "",
-        grupo: estandar.grupo,
-      },
-      { nombre: "PERTINENCIA", valor: "", grupo: estandar.grupo },
-      { nombre: "CONSISTENCIA", valor: "", grupo: estandar.grupo },
-      { nombre: "AVANCE A LA MEDICIÓN", valor: "", grupo: estandar.grupo },
-      { nombre: "TENDENCIA", valor: "", grupo: estandar.grupo },
-      { nombre: "COMPARACIÓN", valor: "", grupo: estandar.grupo },
-    ]);
-    setLoading(false);
-  }, [estandar]);
+    if (!estandar || !estandarId) return;
+
+    const cargarDatos = async () => {
+      try {
+        let calificacion = null;
+        try {
+          calificacion = await api(
+            `/evaluacion/estandares/${estandarId}/calificaciones`
+          );
+        } catch (err) {
+          console.warn(
+            "⚠️ No se encontró calificación guardada:",
+            err instanceof Error ? err.message : String(err)
+          );
+        }
+
+        if (
+          calificacion &&
+          typeof calificacion === "object" &&
+          "sistematicidad" in calificacion
+        ) {
+          const cal = calificacion as {
+            sistematicidad: number | string;
+            proactividad: number | string;
+            ciclo_evaluacion: number | string;
+            despliegue_institucion: number | string;
+            despliegue_cliente: number | string;
+            pertinencia: number | string;
+            consistencia: number | string;
+            avance_medicion: number | string;
+            tendencia: number | string;
+            comparacion: number | string;
+          };
+          setAspectos([
+            {
+              nombre: "SISTEMATICIDAD Y AMPLITUD",
+              valor: cal.sistematicidad,
+              grupo: estandar.grupo,
+            },
+            {
+              nombre: "PROACTIVIDAD",
+              valor: cal.proactividad,
+              grupo: estandar.grupo,
+            },
+            {
+              nombre: "CICLOS DE EVALUACIÓN Y MEJORAMIENTO",
+              valor: cal.ciclo_evaluacion,
+              grupo: estandar.grupo,
+            },
+            {
+              nombre: "DESPLIEGUE A LA INSTITUCIÓN",
+              valor: cal.despliegue_institucion,
+              grupo: estandar.grupo,
+            },
+            {
+              nombre: "DESPLIEGUE AL CLIENTE INTERNO Y/O EXTERNO",
+              valor: cal.despliegue_cliente,
+              grupo: estandar.grupo,
+            },
+            {
+              nombre: "PERTINENCIA",
+              valor: cal.pertinencia,
+              grupo: estandar.grupo,
+            },
+            {
+              nombre: "CONSISTENCIA",
+              valor: cal.consistencia,
+              grupo: estandar.grupo,
+            },
+            {
+              nombre: "AVANCE A LA MEDICIÓN",
+              valor: cal.avance_medicion,
+              grupo: estandar.grupo,
+            },
+            {
+              nombre: "TENDENCIA",
+              valor: cal.tendencia,
+              grupo: estandar.grupo,
+            },
+            {
+              nombre: "COMPARACIÓN",
+              valor: cal.comparacion,
+              grupo: estandar.grupo,
+            },
+          ]);
+        } else {
+          // Si no hay calificación, usar vacíos
+          setAspectos([
+            {
+              nombre: "SISTEMATICIDAD Y AMPLITUD",
+              valor: "",
+              grupo: estandar.grupo,
+            },
+            { nombre: "PROACTIVIDAD", valor: "", grupo: estandar.grupo },
+            {
+              nombre: "CICLOS DE EVALUACIÓN Y MEJORAMIENTO",
+              valor: "",
+              grupo: estandar.grupo,
+            },
+            {
+              nombre: "DESPLIEGUE A LA INSTITUCIÓN",
+              valor: "",
+              grupo: estandar.grupo,
+            },
+            {
+              nombre: "DESPLIEGUE AL CLIENTE INTERNO Y/O EXTERNO",
+              valor: "",
+              grupo: estandar.grupo,
+            },
+            { nombre: "PERTINENCIA", valor: "", grupo: estandar.grupo },
+            { nombre: "CONSISTENCIA", valor: "", grupo: estandar.grupo },
+            {
+              nombre: "AVANCE A LA MEDICIÓN",
+              valor: "",
+              grupo: estandar.grupo,
+            },
+            { nombre: "TENDENCIA", valor: "", grupo: estandar.grupo },
+            { nombre: "COMPARACIÓN", valor: "", grupo: estandar.grupo },
+          ]);
+        }
+
+        // ✅ Cualitativa
+        try {
+          const cualitativa = await api(
+            `/evaluacion/estandares/${estandarId}/evaluacion-cualitativa?autoevaluacionId=${autoevaluacionId}`
+          );
+
+          if (
+            cualitativa &&
+            typeof cualitativa === "object" &&
+            "fortalezas" in cualitativa &&
+            "oportunidades_mejora" in cualitativa
+          ) {
+            setFortalezas(
+              (cualitativa as { fortalezas?: string[] }).fortalezas ?? [""]
+            );
+            setOportunidades(
+              (cualitativa as { oportunidades_mejora?: string[] })
+                .oportunidades_mejora ?? [""]
+            );
+          }
+        } catch (err) {
+          console.warn(
+            "⚠️ No se encontró evaluación cualitativa:",
+            typeof err === "object" && err !== null && "message" in err
+              ? (err as { message: string }).message
+              : String(err)
+          );
+        }
+
+        // ✅ Evidencias
+        try {
+          const res = await fetch(
+            `http://localhost:3001/evidencia-fortaleza/estandares/${estandarId}/evidencias-fortalezas`
+          );
+          const data = await res.json();
+          if (Array.isArray(data)) {
+            const precargadas = data.map((ev: Evidencia) => ({
+              id: ev.id ?? 0,
+              nombre: ev.nombre_archivo ?? "",
+              url: ev.url_archivo ?? "",
+              fecha_carga: ev.fecha_carga ?? "",
+              nombre_archivo: ev.nombre_archivo,
+              url_archivo: ev.url_archivo,
+            }));
+            setEvidencias(precargadas);
+          }
+        } catch (err) {
+          console.warn(
+            "⚠️ No se encontraron evidencias:",
+            typeof err === "object" && err !== null && "message" in err
+              ? (err as { message: string }).message
+              : String(err)
+          );
+        }
+      } catch (error) {
+        console.error("❌ Error general cargando datos:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    setLoading(true);
+    cargarDatos();
+  }, [estandar, estandarId]);
 
   const get = (nombre: string): number => {
     const asp = aspectos.find((a) => a.nombre === nombre);
@@ -193,15 +419,84 @@ export default function AutoevaluacionHoja({
 
           <CalificacionGeneralInput promedio={calificacionPromedio()} />
 
-          <FortalezasTextarea
-            fortalezas={fortalezas}
-            setFortalezas={setFortalezas}
-          />
+          {typeof estandarId === "number" && (
+            <>
+              <QualitativeList
+                tipo="fortalezas"
+                estandarId={estandarId}
+                autoevaluacionId={autoevaluacionId}
+              />
 
-          <OportunidadesTextarea
-            oportunidades={oportunidades}
-            setOportunidades={setOportunidades}
-          />
+              <QualitativeList
+                tipo="oportunidades"
+                estandarId={estandarId}
+                autoevaluacionId={autoevaluacionId}
+              />
+            </>
+          )}
+
+          {/* 📎 Subir evidencias de fortalezas */}
+          <div className="mt-4">
+            <label className="block text-gray-800 font-normal text-md mb-3">
+              Evidencias de fortalezas (PDF, Word, Imágenes)
+            </label>
+            <input
+              type="file"
+              multiple
+              accept=".pdf,.doc,.docx,.jpg,.png,.jpeg"
+              className="block w-full text-sm text-gray-600 file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-verdeClaro file:text-white hover:file:bg-verdeOscuro"
+              onChange={(e) => subirEvidencias(e.target.files)}
+            />
+
+            {/* Mostrar archivos ya subidos */}
+            {evidencias.length > 0 && (
+              <ul className="mt-3 space-y-1 text-sm text-verdeOscuro">
+                {evidencias.map((ev, idx) => (
+                  <li key={idx} className="flex items-center justify-between">
+                    <span>
+                      📄{" "}
+                      <a
+                        href={ev.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline"
+                      >
+                        {ev.nombre}
+                      </a>
+                    </span>
+                    <button
+                      onClick={async () => {
+                        const confirmar = confirm(
+                          "¿Deseas eliminar esta evidencia?"
+                        );
+                        if (!confirmar) return;
+
+                        try {
+                          const res = await fetch(
+                            `http://localhost:3001/evidencia-fortaleza/evidencias/${ev.id}`,
+                            { method: "DELETE" }
+                          );
+
+                          if (res.ok) {
+                            setEvidencias((prev) =>
+                              prev.filter((e) => e.id !== ev.id)
+                            );
+                          } else {
+                            alert("❌ Error eliminando evidencia");
+                          }
+                        } catch (err) {
+                          console.error("❌ Error eliminando:", err);
+                        }
+                      }}
+                      className="text-red-600 text-xs ml-4 hover:underline"
+                    >
+                      x
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
 
           <AspectosTable aspectos={aspectos} setAspectos={setAspectos} />
 

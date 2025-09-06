@@ -12,7 +12,10 @@ export default function FortalezasTextarea({
       <label className="block text-gray-800 font-normal text-md mb-3">
         Fortalezas
       </label>
-      {fortalezas.map((f, i) => (
+      {(Array.isArray(fortalezas) && fortalezas.length > 0
+        ? fortalezas
+        : [""]
+      ).map((f, i) => (
         <textarea
           key={i}
           value={f}
@@ -25,12 +28,13 @@ export default function FortalezasTextarea({
           className="block border border-gray-300 rounded-lg px-4 py-2 w-full mb-3 text-sm focus:ring-2 focus:ring-verdeClaro focus:outline-none"
         />
       ))}
+
       <button
         type="button"
         onClick={() => setFortalezas([...fortalezas, ""])}
         className="text-verdeOscuro text-sm font-semibold hover:text-verdeClaro transition"
       >
-        + Agregar otra fortaleza
+        + Agregar
       </button>
     </div>
   );

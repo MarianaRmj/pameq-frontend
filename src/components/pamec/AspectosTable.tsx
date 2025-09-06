@@ -1,68 +1,91 @@
-type Aspecto = { grupo: string; nombre: string; valor?: number | string };
+"use client";
 
-type Props = {
-  aspectos: Aspecto[];
-  setAspectos: (aspectos: Aspecto[]) => void;
-};
+export const AspectosTable = ({
+  aspectos,
+  setAspectos,
+}: {
+  aspectos: { grupo: string; nombre: string; valor?: number | string }[];
+  setAspectos: (a: { grupo: string; nombre: string; valor?: number | string }[]) => void;
+}) => {
+  const categorias = {
+    ENFOQUE: [
+      "SISTEMATICIDAD Y AMPLITUD",
+      "PROACTIVIDAD",
+      "CICLOS DE EVALUACIÓN Y MEJORAMIENTO",
+    ],
+    IMPLEMENTACIÓN: [
+      "DESPLIEGUE A LA INSTITUCIÓN",
+      "DESPLIEGUE AL CLIENTE INTERNO Y/O EXTERNO",
+    ],
+    RESULTADO: [
+      "PERTINENCIA",
+      "CONSISTENCIA",
+      "AVANCE A LA MEDICIÓN",
+      "TENDENCIA",
+      "COMPARACIÓN",
+    ],
+  };
 
-export const AspectosTable = ({ aspectos, setAspectos }: Props) => {
+  const handleChange = (nombre: string, value: string) => {
+    const nuevos = aspectos.map((a) =>
+      a.nombre === nombre ? { ...a, valor: value } : a
+    );
+    setAspectos(nuevos);
+  };
+
   return (
-    <div className="font-nunito mb-6">
-      <div className="overflow-x-auto rounded-lg border border-gray-400">
-        <table className="w-full text-sm text-left border-collapse">
-          <tbody>
-            {(() => {
-              const grupos = aspectos.reduce<Record<string, Aspecto[]>>(
-                (acc, a) => {
-                  (acc[a.grupo] ||= []).push(a);
-                  return acc;
-                },
-                {}
-              );
-
-              return Object.entries(grupos).map(([grupo, items]) =>
-                items.map((a, idx) => (
-                  <tr
-                    key={`${grupo}-${a.nombre}-${idx}`}
-                    className="border-t border-gray-400 hover:bg-gray-50 transition"
-                  >
-                    {idx === 0 && (
-                      <th
-                        scope="rowgroup"
-                        rowSpan={items.length}
-                        className="px-2 border-r border-gray-400 align-top font-semibold text-verdeOscuro bg-gray-50"
-                      >
-                        {grupo}
-                      </th>
-                    )}
-                    <td className="px-2 border-r border-gray-400 align-top text-gray-700">
-                      {a.nombre}
+    <div className="mt-8 font-nunito max-w-4xl mx-auto ">
+      <table className="w-full table-auto border border-gray-600 shadow-sm rounded-lg overflow-hidden text-sm">
+        <thead className="bg-[#f9fafb] text-gray-700 uppercase tracking-wide">
+          <tr>
+            <th className="border border-gray-300 px-3 py-1 text-center w-[35%]">
+              Categoría
+            </th>
+            <th className="border border-gray-300 px-3 py-1 text-center w-[50%]">
+              Aspecto
+            </th>
+            <th className="border border-gray-300 px-3 py-1 text-center w-[15%]">
+              Valor
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {Object.entries(categorias).map(([categoria, items]) =>
+            items.map((nombre, idx) => {
+              const aspecto = aspectos.find((a) => a.nombre === nombre);
+              return (
+                <tr
+                  key={nombre}
+                  className="hover:bg-[#f6f6f6] transition-colors duration-200"
+                >
+                  {idx === 0 ? (
+                    <td
+                      rowSpan={items.length}
+                      className="border border-gray-300 px-3 py-1 font-semibold text-verdeOscuro bg-[#f2f2f2] align-top text-sm"
+                    >
+                      {categoria}
                     </td>
-                    <td className="px-2 align-top">
-                      <input
-                        type="number"
-                        min={1}
-                        max={5}
-                        value={a.valor ?? ""}
-                        onChange={(e) => {
-                          const v = e.currentTarget.valueAsNumber;
-                          const nuevos = aspectos.map((item) =>
-                            item.grupo === a.grupo && item.nombre === a.nombre
-                              ? { ...item, valor: Number.isFinite(v) ? v : "" }
-                              : item
-                          );
-                          setAspectos(nuevos);
-                        }}
-                        className="border border-gray-400 rounded-lg px-2 py-1 w-20 text-center focus:ring-2 focus:ring-verdeClaro focus:outline-none"
-                      />
-                    </td>
-                  </tr>
-                ))
+                  ) : null}
+                  <td className="border border-gray-300 px-3 py-1 text-gray-800">
+                    {nombre}
+                  </td>
+                  <td className="border border-gray-300 px-3 py-1 text-center">
+                    <input
+                      type="number"
+                      value={aspecto?.valor ?? ""}
+                      onChange={(e) => handleChange(nombre, e.target.value)}
+                      min={0}
+                      max={5}
+                      className="w-14 border border-gray-300 rounded-md text-center px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-verdeClaro text-sm"
+                      placeholder="0"
+                    />
+                  </td>
+                </tr>
               );
-            })()}
-          </tbody>
-        </table>
-      </div>
+            })
+          )}
+        </tbody>
+      </table>
     </div>
   );
 };
