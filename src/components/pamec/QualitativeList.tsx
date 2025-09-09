@@ -4,12 +4,6 @@ import { useEffect, useState } from "react";
 import { api } from "@/app/lib/api";
 import { toast } from "sonner";
 
-// Tipos esperados desde el backend
-interface EvaluacionCualitativaResponse {
-  fortalezas: string[];
-  oportunidades_mejora: string[];
-}
-
 interface AddItemResponse {
   fortalezas?: string[];
   oportunidades?: string[];
@@ -21,43 +15,52 @@ interface Props {
   tipo: Tipo;
   estandarId: number;
   autoevaluacionId: number;
+  items: string[]; // ✅ Levantado al padre
+  setItems: (items: string[]) => void; // ✅ Levantado al padre
 }
 
 export default function QualitativeList({
   tipo,
   estandarId,
   autoevaluacionId,
+  items,
+  setItems,
 }: Props) {
-  const [items, setItems] = useState<string[]>([]);
   const [nuevo, setNuevo] = useState("");
   const [agregando, setAgregando] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const isFortaleza = tipo === "fortalezas";
   const label = isFortaleza ? "Fortalezas" : "Oportunidades de Mejora";
-  const endpoint = isFortaleza ? "fortalezas" : "oportunidades_mejora";
+
+  const createEndpoint = isFortaleza ? "fortalezas" : "oportunidades_mejora";
+  const mutateEndpoint = isFortaleza ? "fortalezas" : "oportunidades";
 
   // 🔄 Cargar datos iniciales
   useEffect(() => {
     const cargar = async () => {
       try {
-        const res = await api<EvaluacionCualitativaResponse>(
+        setLoading(true);
+        const res = await api<{
+          fortalezas: string[];
+          oportunidades_mejora: string[];
+        }>(
           `/evaluacion/estandares/${estandarId}/evaluacion-cualitativa?autoevaluacionId=${autoevaluacionId}`
         );
         setItems(
-          isFortaleza ? res?.fortalezas ?? [] : res?.oportunidades_mejora ?? []
+          isFortaleza ? res.fortalezas ?? [] : res.oportunidades_mejora ?? []
         );
       } catch (err) {
         console.error(`❌ Error cargando ${tipo}:`, err);
+        toast.error("Error cargando datos");
       } finally {
         setLoading(false);
       }
     };
 
     cargar();
-  }, [estandarId, autoevaluacionId, tipo, endpoint]);
+  }, [estandarId, autoevaluacionId, tipo, setItems, isFortaleza]);
 
-  // ➕ Agregar nuevo ítem
   const guardar = async () => {
     const texto = nuevo.trim();
     if (!texto) return toast.warning("Debes escribir algo antes de guardar");
@@ -65,15 +68,17 @@ export default function QualitativeList({
     try {
       setAgregando(true);
       const res = await api<AddItemResponse>(
-        `/evaluacion/estandares/${estandarId}/evaluacion-cualitativa/${endpoint}`,
+        `/evaluacion/estandares/${estandarId}/evaluacion-cualitativa/${createEndpoint}`,
         {
           method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ autoevaluacionId, text: texto }),
         }
       );
-      const data = res as AddItemResponse;
-      setItems((isFortaleza ? data.fortalezas : data.oportunidades) ?? []);
+
+      setItems(isFortaleza ? res.fortalezas ?? [] : res.oportunidades ?? []);
       setNuevo("");
+      toast.success("Agregado");
     } catch (err) {
       console.error("❌ Error agregando:", err);
       toast.error("No se pudo agregar");
@@ -82,48 +87,44 @@ export default function QualitativeList({
     }
   };
 
-  // 🗑️ Eliminar ítem
-  const eliminar = async (index: number) => {
-    const confirmar = confirm("¿Deseas eliminar este ítem?");
-    if (!confirmar) return;
+  const eliminar = async (idx: number) => {
+    if (!confirm("¿Deseas eliminar este ítem?")) return;
+
+    const value = items[idx];
+    if (value == null) return;
 
     try {
-      const res = await api(
-        `/evaluacion/estandares/${estandarId}/evaluacion-cualitativa/oportunidades`,
+      const res = await api<AddItemResponse>(
+        `/evaluacion/estandares/${estandarId}/evaluacion-cualitativa/${mutateEndpoint}`,
         {
           method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            index,
-            autoevaluacionId, // asegúrate de tener este valor en el componente
-          }),
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ value, autoevaluacionId }),
         }
       );
-
-      const data = res as AddItemResponse;
-      setItems(data.oportunidades ?? []);
+      setItems(isFortaleza ? res.fortalezas ?? [] : res.oportunidades ?? []);
+      toast.success("Ítem eliminado");
     } catch (err) {
       console.error("❌ Error eliminando:", err);
       toast.error("No se pudo eliminar");
     }
   };
 
-  // 📝 Editar ítem
   const editar = async (index: number, textoNuevo: string) => {
     const texto = textoNuevo.trim();
     if (!texto) return;
 
     try {
       const res = await api<AddItemResponse>(
-        `/evaluacion/estandares/${estandarId}/evaluacion-cualitativa/${endpoint}`,
+        `/evaluacion/estandares/${estandarId}/evaluacion-cualitativa/${mutateEndpoint}`,
         {
           method: "PATCH",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ autoevaluacionId, index, text: texto }),
         }
       );
-      setItems((isFortaleza ? res.fortalezas : res.oportunidades) ?? []);
+      setItems(isFortaleza ? res.fortalezas ?? [] : res.oportunidades ?? []);
+      toast.success("Actualizado");
     } catch (err) {
       console.error("❌ Error editando:", err);
       toast.error("No se pudo editar");
@@ -170,7 +171,6 @@ export default function QualitativeList({
             ))}
           </ul>
 
-          {/* Formulario de nuevo ítem */}
           {agregando ? (
             <div className="mt-3">
               <textarea

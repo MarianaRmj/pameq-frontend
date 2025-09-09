@@ -288,7 +288,7 @@ export default function AutoevaluacionHoja({
 
     setLoading(true);
     cargarDatos();
-  }, [estandar, estandarId]);
+  }, [estandar, estandarId, autoevaluacionId]);
 
   const get = (nombre: string): number => {
     const asp = aspectos.find((a) => a.nombre === nombre);
@@ -425,12 +425,16 @@ export default function AutoevaluacionHoja({
                 tipo="fortalezas"
                 estandarId={estandarId}
                 autoevaluacionId={autoevaluacionId}
+                items={fortalezas}
+                setItems={setFortalezas}
               />
 
               <QualitativeList
                 tipo="oportunidades"
                 estandarId={estandarId}
                 autoevaluacionId={autoevaluacionId}
+                items={oportunidades}
+                setItems={setOportunidades}
               />
             </>
           )}
