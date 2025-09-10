@@ -24,7 +24,7 @@ type Estandar = {
   grupo: string;
   codigo: string;
   descripcion: string;
-  criterios: string[]; // ← array
+  criterios: string[];
 };
 
 export default function AutoevaluacionHoja({
@@ -35,9 +35,15 @@ export default function AutoevaluacionHoja({
   autoevaluacionId: number;
 }) {
   const estandarId = estandar.id ?? estandar.estandarId;
+
+  // Estados
   const [aspectos, setAspectos] = useState<Aspecto[]>([]);
-  const [fortalezas, setFortalezas] = useState<string[]>([""]);
-  const [oportunidades, setOportunidades] = useState<string[]>([""]);
+  const [fortalezas, setFortalezas] = useState<string[]>([]);
+  const [oportunidades, setOportunidades] = useState<string[]>([]);
+  const [efectoOportunidades, setEfectoOportunidades] = useState<string[]>([]);
+  const [accionesMejora, setAccionesMejora] = useState<string[]>([]);
+  const [limitantesAcciones, setLimitantesAcciones] = useState<string[]>([]);
+
   const [mostrarCriterios, setMostrarCriterios] = useState(true);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -45,6 +51,7 @@ export default function AutoevaluacionHoja({
   const [evidencias, setEvidencias] = useState<Evidencia[]>([]);
   const uploadingRef = useRef(false);
 
+  // 📎 Subir evidencias
   const subirEvidencias = async (files: FileList | null) => {
     if (!files) return;
     uploadingRef.current = true;
@@ -60,15 +67,10 @@ export default function AutoevaluacionHoja({
       try {
         const res = await fetch(
           "http://localhost:3001/evidencia-fortaleza/evidencias/fortalezas",
-          {
-            method: "POST",
-            body: formData,
-          }
+          { method: "POST", body: formData }
         );
 
         const text = await res.text();
-        console.log("🔍 Respuesta cruda del backend:", text);
-
         let data: unknown = {};
         try {
           data = JSON.parse(text);
@@ -103,40 +105,36 @@ export default function AutoevaluacionHoja({
     uploadingRef.current = false;
   };
 
+  // 🔄 Cargar datos iniciales
   useEffect(() => {
     if (!estandar || !estandarId) return;
 
     const cargarDatos = async () => {
       try {
+        // Calificaciones
         let calificacion = null;
         try {
           calificacion = await api(
             `/evaluacion/estandares/${estandarId}/calificaciones`
           );
         } catch (err) {
-          console.warn(
-            "⚠️ No se encontró calificación guardada:",
-            err instanceof Error ? err.message : String(err)
-          );
+          console.warn("⚠️ No se encontró calificación guardada:", err);
         }
 
-        if (
-          calificacion &&
-          typeof calificacion === "object" &&
-          "sistematicidad" in calificacion
-        ) {
-          const cal = calificacion as {
-            sistematicidad: number | string;
-            proactividad: number | string;
-            ciclo_evaluacion: number | string;
-            despliegue_institucion: number | string;
-            despliegue_cliente: number | string;
-            pertinencia: number | string;
-            consistencia: number | string;
-            avance_medicion: number | string;
-            tendencia: number | string;
-            comparacion: number | string;
+        if (calificacion && typeof calificacion === "object") {
+          type Calificacion = {
+            sistematicidad?: number | string;
+            proactividad?: number | string;
+            ciclo_evaluacion?: number | string;
+            despliegue_institucion?: number | string;
+            despliegue_cliente?: number | string;
+            pertinencia?: number | string;
+            consistencia?: number | string;
+            avance_medicion?: number | string;
+            tendencia?: number | string;
+            comparacion?: number | string;
           };
+          const cal = calificacion as Calificacion;
           setAspectos([
             {
               nombre: "SISTEMATICIDAD Y AMPLITUD",
@@ -189,72 +187,31 @@ export default function AutoevaluacionHoja({
               grupo: estandar.grupo,
             },
           ]);
-        } else {
-          // Si no hay calificación, usar vacíos
-          setAspectos([
-            {
-              nombre: "SISTEMATICIDAD Y AMPLITUD",
-              valor: "",
-              grupo: estandar.grupo,
-            },
-            { nombre: "PROACTIVIDAD", valor: "", grupo: estandar.grupo },
-            {
-              nombre: "CICLOS DE EVALUACIÓN Y MEJORAMIENTO",
-              valor: "",
-              grupo: estandar.grupo,
-            },
-            {
-              nombre: "DESPLIEGUE A LA INSTITUCIÓN",
-              valor: "",
-              grupo: estandar.grupo,
-            },
-            {
-              nombre: "DESPLIEGUE AL CLIENTE INTERNO Y/O EXTERNO",
-              valor: "",
-              grupo: estandar.grupo,
-            },
-            { nombre: "PERTINENCIA", valor: "", grupo: estandar.grupo },
-            { nombre: "CONSISTENCIA", valor: "", grupo: estandar.grupo },
-            {
-              nombre: "AVANCE A LA MEDICIÓN",
-              valor: "",
-              grupo: estandar.grupo,
-            },
-            { nombre: "TENDENCIA", valor: "", grupo: estandar.grupo },
-            { nombre: "COMPARACIÓN", valor: "", grupo: estandar.grupo },
-          ]);
         }
 
-        // ✅ Cualitativa
+        // Cualitativa
         try {
           const cualitativa = await api(
             `/evaluacion/estandares/${estandarId}/evaluacion-cualitativa?autoevaluacionId=${autoevaluacionId}`
-          );
-
-          if (
-            cualitativa &&
-            typeof cualitativa === "object" &&
-            "fortalezas" in cualitativa &&
-            "oportunidades_mejora" in cualitativa
-          ) {
-            setFortalezas(
-              (cualitativa as { fortalezas?: string[] }).fortalezas ?? [""]
-            );
-            setOportunidades(
-              (cualitativa as { oportunidades_mejora?: string[] })
-                .oportunidades_mejora ?? [""]
-            );
+          ) as {
+            fortalezas?: string[];
+            oportunidades_mejora?: string[];
+            efecto_oportunidades?: string[];
+            acciones_mejora?: string[];
+            limitantes_acciones?: string[];
+          } | null;
+          if (cualitativa) {
+            setFortalezas(cualitativa?.fortalezas ?? []);
+            setOportunidades(cualitativa?.oportunidades_mejora ?? []);
+            setEfectoOportunidades(cualitativa?.efecto_oportunidades ?? []);
+            setAccionesMejora(cualitativa?.acciones_mejora ?? []);
+            setLimitantesAcciones(cualitativa?.limitantes_acciones ?? []);
           }
         } catch (err) {
-          console.warn(
-            "⚠️ No se encontró evaluación cualitativa:",
-            typeof err === "object" && err !== null && "message" in err
-              ? (err as { message: string }).message
-              : String(err)
-          );
+          console.warn("⚠️ No se encontró evaluación cualitativa:", err);
         }
 
-        // ✅ Evidencias
+        // Evidencias
         try {
           const res = await fetch(
             `http://localhost:3001/evidencia-fortaleza/estandares/${estandarId}/evidencias-fortalezas`
@@ -272,12 +229,7 @@ export default function AutoevaluacionHoja({
             setEvidencias(precargadas);
           }
         } catch (err) {
-          console.warn(
-            "⚠️ No se encontraron evidencias:",
-            typeof err === "object" && err !== null && "message" in err
-              ? (err as { message: string }).message
-              : String(err)
-          );
+          console.warn("⚠️ No se encontraron evidencias:", err);
         }
       } catch (error) {
         console.error("❌ Error general cargando datos:", error);
@@ -290,6 +242,7 @@ export default function AutoevaluacionHoja({
     cargarDatos();
   }, [estandar, estandarId, autoevaluacionId]);
 
+  // Helpers
   const get = (nombre: string): number => {
     const asp = aspectos.find((a) => a.nombre === nombre);
     const v =
@@ -327,11 +280,9 @@ export default function AutoevaluacionHoja({
     return (suma / nums.length).toFixed(2);
   };
 
+  // Guardar
   const guardarHoja = async () => {
-    if (!estandarId) {
-      alert("No se encontró el ID del estándar.");
-      return;
-    }
+    if (!estandarId) return alert("No se encontró el ID del estándar.");
     try {
       setSaving(true);
 
@@ -374,6 +325,9 @@ export default function AutoevaluacionHoja({
         estandarId,
         fortalezas,
         oportunidades_mejora: oportunidades,
+        efecto_oportunidades: efectoOportunidades,
+        acciones_mejora: accionesMejora,
+        limitantes_acciones: limitantesAcciones,
       };
 
       await api(`/evaluacion/estandares/${estandarId}/calificaciones`, {
@@ -397,7 +351,7 @@ export default function AutoevaluacionHoja({
 
   return (
     <div className="p-8 border border-gray-200 rounded-2xl bg-white shadow-lg mb-10 max-w-5xl mx-auto font-nunito">
-      <h2 className="text-2xl font-nunito text-verdeOscuro  mb-2">
+      <h2 className="text-2xl text-verdeOscuro mb-2">
         {estandar.grupo} - {estandar.codigo}
       </h2>
 
@@ -428,7 +382,6 @@ export default function AutoevaluacionHoja({
                 items={fortalezas}
                 setItems={setFortalezas}
               />
-
               <QualitativeList
                 tipo="oportunidades"
                 estandarId={estandarId}
@@ -436,11 +389,32 @@ export default function AutoevaluacionHoja({
                 items={oportunidades}
                 setItems={setOportunidades}
               />
+              <QualitativeList
+                tipo="efecto_oportunidades"
+                estandarId={estandarId}
+                autoevaluacionId={autoevaluacionId}
+                items={efectoOportunidades}
+                setItems={setEfectoOportunidades}
+              />
+              <QualitativeList
+                tipo="acciones_mejora"
+                estandarId={estandarId}
+                autoevaluacionId={autoevaluacionId}
+                items={accionesMejora}
+                setItems={setAccionesMejora}
+              />
+              <QualitativeList
+                tipo="limitantes_acciones"
+                estandarId={estandarId}
+                autoevaluacionId={autoevaluacionId}
+                items={limitantesAcciones}
+                setItems={setLimitantesAcciones}
+              />
             </>
           )}
 
-          {/* 📎 Subir evidencias de fortalezas */}
-          <div className="mt-4">
+          {/* 📎 Subir evidencias */}
+          <div className="mt-6">
             <label className="block text-gray-800 font-normal text-md mb-3">
               Evidencias de fortalezas (PDF, Word, Imágenes)
             </label>
@@ -452,7 +426,6 @@ export default function AutoevaluacionHoja({
               onChange={(e) => subirEvidencias(e.target.files)}
             />
 
-            {/* Mostrar archivos ya subidos */}
             {evidencias.length > 0 && (
               <ul className="mt-3 space-y-1 text-sm text-verdeOscuro">
                 {evidencias.map((ev, idx) => (
@@ -470,17 +443,13 @@ export default function AutoevaluacionHoja({
                     </span>
                     <button
                       onClick={async () => {
-                        const confirmar = confirm(
-                          "¿Deseas eliminar esta evidencia?"
-                        );
-                        if (!confirmar) return;
-
+                        if (!confirm("¿Deseas eliminar esta evidencia?"))
+                          return;
                         try {
                           const res = await fetch(
                             `http://localhost:3001/evidencia-fortaleza/evidencias/${ev.id}`,
                             { method: "DELETE" }
                           );
-
                           if (res.ok) {
                             setEvidencias((prev) =>
                               prev.filter((e) => e.id !== ev.id)
@@ -510,7 +479,7 @@ export default function AutoevaluacionHoja({
               disabled={saving}
               className="bg-verdeOscuro disabled:opacity-60 text-white px-6 py-1 rounded-lg shadow hover:bg-verdeClaro transition"
             >
-              {saving ? "Guardando..." : "Guardar Hoja"}
+              {saving ? "Guardando..." : "Guardar Autoevaluación"}
             </button>
           </div>
         </>
