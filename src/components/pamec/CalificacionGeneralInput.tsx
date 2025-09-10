@@ -6,7 +6,7 @@ export default function CalificacionGeneralInput({
   promedio: string;
 }) {
   return (
-    <div className="mb-4">
+    <div className="mb-3 py-5">
       <label className="block text-gray-800 font-nunito text-md mb-2">
         Calificación General
       </label>

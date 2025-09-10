@@ -6,6 +6,13 @@ import CriteriosToggle from "./CriteriosToggle";
 import QualitativeList from "./QualitativeList";
 import { AspectosTable } from "./AspectosTable";
 import { api } from "@/app/lib/api";
+import {
+  ChevronDown,
+  ChevronRight,
+  Paperclip,
+  Trash2,
+  Upload,
+} from "lucide-react";
 
 type Aspecto = { grupo: string; nombre: string; valor?: number | string };
 
@@ -47,6 +54,9 @@ export default function AutoevaluacionHoja({
   const [mostrarCriterios, setMostrarCriterios] = useState(true);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  const [mostrarCualitativa, setMostrarCualitativa] = useState(true);
+  const [mostrarCuantitativa, setMostrarCuantitativa] = useState(true);
 
   const [evidencias, setEvidencias] = useState<Evidencia[]>([]);
   const uploadingRef = useRef(false);
@@ -105,13 +115,13 @@ export default function AutoevaluacionHoja({
     uploadingRef.current = false;
   };
 
-  // 🔄 Cargar datos iniciales
+  // 🔄 Cargar datos iniciales (solo depende de estandarId y autoevaluacionId)
   useEffect(() => {
-    if (!estandar || !estandarId) return;
+    if (!estandarId) return;
 
     const cargarDatos = async () => {
       try {
-        // Calificaciones
+        // --- Calificaciones ---
         let calificacion = null;
         try {
           calificacion = await api(
@@ -189,29 +199,30 @@ export default function AutoevaluacionHoja({
           ]);
         }
 
-        // Cualitativa
+        // --- Cualitativa ---
         try {
-          const cualitativa = await api(
+          const cualitativa = (await api(
             `/evaluacion/estandares/${estandarId}/evaluacion-cualitativa?autoevaluacionId=${autoevaluacionId}`
-          ) as {
+          )) as {
             fortalezas?: string[];
             oportunidades_mejora?: string[];
             efecto_oportunidades?: string[];
             acciones_mejora?: string[];
             limitantes_acciones?: string[];
           } | null;
+
           if (cualitativa) {
-            setFortalezas(cualitativa?.fortalezas ?? []);
-            setOportunidades(cualitativa?.oportunidades_mejora ?? []);
-            setEfectoOportunidades(cualitativa?.efecto_oportunidades ?? []);
-            setAccionesMejora(cualitativa?.acciones_mejora ?? []);
-            setLimitantesAcciones(cualitativa?.limitantes_acciones ?? []);
+            setFortalezas(cualitativa.fortalezas ?? []);
+            setOportunidades(cualitativa.oportunidades_mejora ?? []);
+            setEfectoOportunidades(cualitativa.efecto_oportunidades ?? []);
+            setAccionesMejora(cualitativa.acciones_mejora ?? []);
+            setLimitantesAcciones(cualitativa.limitantes_acciones ?? []);
           }
         } catch (err) {
           console.warn("⚠️ No se encontró evaluación cualitativa:", err);
         }
 
-        // Evidencias
+        // --- Evidencias ---
         try {
           const res = await fetch(
             `http://localhost:3001/evidencia-fortaleza/estandares/${estandarId}/evidencias-fortalezas`
@@ -240,7 +251,7 @@ export default function AutoevaluacionHoja({
 
     setLoading(true);
     cargarDatos();
-  }, [estandar, estandarId, autoevaluacionId]);
+  }, [estandarId, autoevaluacionId, estandar.grupo]);
 
   // Helpers
   const get = (nombre: string): number => {
@@ -349,8 +360,36 @@ export default function AutoevaluacionHoja({
     }
   };
 
+  const Section = ({
+    title,
+    open,
+    setOpen,
+    children,
+  }: {
+    title: string;
+    open: boolean;
+    setOpen: (v: boolean) => void;
+    children: React.ReactNode;
+  }) => (
+    <div className="mb-6 border border-gray-200 rounded-lg shadow-sm">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex justify-between items-center px-4 py-2 bg-gray-50 hover:bg-gray-100 rounded-t-lg"
+      >
+        <span className="font-semibold text-verdeOscuro">{title}</span>
+        {open ? (
+          <ChevronDown className="w-4 h-4 text-gray-600" />
+        ) : (
+          <ChevronRight className="w-4 h-4 text-gray-600" />
+        )}
+      </button>
+      {open && <div className="p-4">{children}</div>}
+    </div>
+  );
+
   return (
     <div className="p-8 border border-gray-200 rounded-2xl bg-white shadow-lg mb-10 max-w-5xl mx-auto font-nunito">
+      {/* Encabezado del estándar */}
       <h2 className="text-2xl text-verdeOscuro mb-2">
         {estandar.grupo} - {estandar.codigo}
       </h2>
@@ -361,123 +400,153 @@ export default function AutoevaluacionHoja({
         </p>
       )}
 
+      <CriteriosToggle
+        mostrarCriterios={mostrarCriterios}
+        setMostrarCriterios={setMostrarCriterios}
+        criterios={estandar.criterios}
+      />
+
       {loading ? (
         <p className="text-gray-500">Cargando datos guardados...</p>
       ) : (
         <>
-          <CriteriosToggle
-            mostrarCriterios={mostrarCriterios}
-            setMostrarCriterios={setMostrarCriterios}
-            criterios={estandar.criterios}
-          />
+          {/* --- Bloque de Evaluación Cualitativa --- */}
+          <Section
+            title="Evaluación Cualitativa"
+            open={mostrarCualitativa}
+            setOpen={setMostrarCualitativa}
+          >
+            {typeof estandarId === "number" && (
+              <div className="space-y-4">
+                <QualitativeList
+                  tipo="fortalezas"
+                  estandarId={estandarId}
+                  autoevaluacionId={autoevaluacionId}
+                  items={fortalezas}
+                  setItems={setFortalezas}
+                />
 
-          <CalificacionGeneralInput promedio={calificacionPromedio()} />
+                {/* 📎 Subir evidencias */}
+                <div className="mb-8 p-5 bg-white border border-gray-200 rounded-xl shadow-sm">
+                  {/* Título */}
+                  <h4 className="text-lg font-semibold text-verdeOscuro mb-3 flex items-center gap-2">
+                    <Paperclip className="w-5 h-5" />
+                    Evidencias de fortalezas
+                  </h4>
+                  <p className="text-sm text-gray-500 mb-4">
+                    Adjunta archivos en formato PDF, Word o imágenes.
+                  </p>
 
-          {typeof estandarId === "number" && (
-            <>
-              <QualitativeList
-                tipo="fortalezas"
-                estandarId={estandarId}
-                autoevaluacionId={autoevaluacionId}
-                items={fortalezas}
-                setItems={setFortalezas}
-              />
-              <QualitativeList
-                tipo="oportunidades"
-                estandarId={estandarId}
-                autoevaluacionId={autoevaluacionId}
-                items={oportunidades}
-                setItems={setOportunidades}
-              />
-              <QualitativeList
-                tipo="efecto_oportunidades"
-                estandarId={estandarId}
-                autoevaluacionId={autoevaluacionId}
-                items={efectoOportunidades}
-                setItems={setEfectoOportunidades}
-              />
-              <QualitativeList
-                tipo="acciones_mejora"
-                estandarId={estandarId}
-                autoevaluacionId={autoevaluacionId}
-                items={accionesMejora}
-                setItems={setAccionesMejora}
-              />
-              <QualitativeList
-                tipo="limitantes_acciones"
-                estandarId={estandarId}
-                autoevaluacionId={autoevaluacionId}
-                items={limitantesAcciones}
-                setItems={setLimitantesAcciones}
-              />
-            </>
-          )}
+                  {/* Input de archivos */}
+                  <label className="flex items-center justify-center w-full cursor-pointer bg-verdeClaro text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-verdeOscuro transition">
+                    <Upload className="w-4 h-4 mr-2" />
+                    Subir archivos
+                    <input
+                      type="file"
+                      multiple
+                      accept=".pdf,.doc,.docx,.jpg,.png,.jpeg"
+                      className="hidden"
+                      onChange={(e) => subirEvidencias(e.target.files)}
+                    />
+                  </label>
 
-          {/* 📎 Subir evidencias */}
-          <div className="mt-6">
-            <label className="block text-gray-800 font-normal text-md mb-3">
-              Evidencias de fortalezas (PDF, Word, Imágenes)
-            </label>
-            <input
-              type="file"
-              multiple
-              accept=".pdf,.doc,.docx,.jpg,.png,.jpeg"
-              className="block w-full text-sm text-gray-600 file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-verdeClaro file:text-white hover:file:bg-verdeOscuro"
-              onChange={(e) => subirEvidencias(e.target.files)}
-            />
+                  {/* Lista de evidencias */}
+                  {evidencias.length > 0 && (
+                    <ul className="mt-4 space-y-2">
+                      {evidencias.map((ev, idx) => (
+                        <li
+                          key={idx}
+                          className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm"
+                        >
+                          <a
+                            href={ev.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 text-verdeOscuro hover:underline"
+                          >
+                            📄 {ev.nombre}
+                          </a>
+                          <button
+                            onClick={async () => {
+                              if (!confirm("¿Deseas eliminar esta evidencia?"))
+                                return;
+                              try {
+                                const res = await fetch(
+                                  `http://localhost:3001/evidencia-fortaleza/evidencias/${ev.id}`,
+                                  { method: "DELETE" }
+                                );
+                                if (res.ok) {
+                                  setEvidencias((prev) =>
+                                    prev.filter((e) => e.id !== ev.id)
+                                  );
+                                } else {
+                                  alert("❌ Error eliminando evidencia");
+                                }
+                              } catch (err) {
+                                console.error("❌ Error eliminando:", err);
+                              }
+                            }}
+                            className="text-red-500 hover:text-red-700 transition"
+                            title="Eliminar evidencia"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
 
-            {evidencias.length > 0 && (
-              <ul className="mt-3 space-y-1 text-sm text-verdeOscuro">
-                {evidencias.map((ev, idx) => (
-                  <li key={idx} className="flex items-center justify-between">
-                    <span>
-                      📄{" "}
-                      <a
-                        href={ev.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="underline"
-                      >
-                        {ev.nombre}
-                      </a>
-                    </span>
-                    <button
-                      onClick={async () => {
-                        if (!confirm("¿Deseas eliminar esta evidencia?"))
-                          return;
-                        try {
-                          const res = await fetch(
-                            `http://localhost:3001/evidencia-fortaleza/evidencias/${ev.id}`,
-                            { method: "DELETE" }
-                          );
-                          if (res.ok) {
-                            setEvidencias((prev) =>
-                              prev.filter((e) => e.id !== ev.id)
-                            );
-                          } else {
-                            alert("❌ Error eliminando evidencia");
-                          }
-                        } catch (err) {
-                          console.error("❌ Error eliminando:", err);
-                        }
-                      }}
-                      className="text-red-600 text-xs ml-4 hover:underline"
-                    >
-                      x
-                    </button>
-                  </li>
-                ))}
-              </ul>
+                <QualitativeList
+                  tipo="oportunidades_mejora"
+                  estandarId={estandarId}
+                  autoevaluacionId={autoevaluacionId}
+                  items={oportunidades}
+                  setItems={setOportunidades}
+                />
+                <QualitativeList
+                  tipo="efecto_oportunidades"
+                  estandarId={estandarId}
+                  autoevaluacionId={autoevaluacionId}
+                  items={efectoOportunidades}
+                  setItems={setEfectoOportunidades}
+                />
+                <QualitativeList
+                  tipo="acciones_mejora"
+                  estandarId={estandarId}
+                  autoevaluacionId={autoevaluacionId}
+                  items={accionesMejora}
+                  setItems={setAccionesMejora}
+                />
+                <QualitativeList
+                  tipo="limitantes_acciones"
+                  estandarId={estandarId}
+                  autoevaluacionId={autoevaluacionId}
+                  items={limitantesAcciones}
+                  setItems={setLimitantesAcciones}
+                />
+              </div>
             )}
-          </div>
+          </Section>
 
-          <AspectosTable aspectos={aspectos} setAspectos={setAspectos} />
+          {/* --- Bloque de Evaluación Cuantitativa --- */}
+          <Section
+            title="Evaluación Cuantitativa"
+            open={mostrarCuantitativa}
+            setOpen={setMostrarCuantitativa}
+          >
+            <AspectosTable aspectos={aspectos} setAspectos={setAspectos} />
+            <div className="mt-4">
+              <CalificacionGeneralInput promedio={calificacionPromedio()} />
+            </div>
+          </Section>
 
+          {/* --- Botón guardar --- */}
           <div className="flex justify-end mt-6">
             <button
               onClick={guardarHoja}
               disabled={saving}
-              className="bg-verdeOscuro disabled:opacity-60 text-white px-6 py-1 rounded-lg shadow hover:bg-verdeClaro transition"
+              className="bg-verdeOscuro disabled:opacity-60 text-white px-6 py-2 rounded-lg shadow hover:bg-verdeClaro transition"
             >
               {saving ? "Guardando..." : "Guardar Autoevaluación"}
             </button>
