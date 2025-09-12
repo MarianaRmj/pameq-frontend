@@ -133,7 +133,7 @@ export default function SchedulePage() {
 
   return (
     <div className="bg-white shadow rounded-xl p-6 max-w-7xl mx-auto">
-      <h2 className="text-2xl font-nunito font-nunito text-verdeOscuro mb-2">
+      <h2 className="text-2xl font-nunito text-verdeOscuro mb-2">
         Cronograma de Actividades
       </h2>
       <p className="mb-4 text-negro font-nunito">
