@@ -1,11 +1,35 @@
 "use client";
 
+import { api } from "@/app/lib/api";
+import { toast } from "sonner";
+
+// 🔑 Tipo fuerte que refleja tu entity CalificacionEstandar en BD
+export type Aspectos = {
+  sistematicidad: number;
+  proactividad: number;
+  ciclo_evaluacion: number;
+  despliegue_institucion: number;
+  despliegue_cliente: number;
+  pertinencia: number;
+  consistencia: number;
+  avance_medicion: number;
+  tendencia: number;
+  comparacion: number;
+  total_enfoque: number;
+  total_implementacion: number;
+  total_resultados: number;
+  total_estandar: number;
+  calificacion: number;
+};
+
 export const AspectosTable = ({
   aspectos,
   setAspectos,
+  autoevaluacionId,
 }: {
-  aspectos: { grupo: string; nombre: string; valor?: number | string }[];
-  setAspectos: (a: { grupo: string; nombre: string; valor?: number | string }[]) => void;
+  aspectos: Aspectos;
+  setAspectos: React.Dispatch<React.SetStateAction<Aspectos>>;
+  autoevaluacionId: number;
 }) => {
   const categorias = {
     ENFOQUE: [
@@ -26,11 +50,47 @@ export const AspectosTable = ({
     ],
   };
 
-  const handleChange = (nombre: string, value: string) => {
-    const nuevos = aspectos.map((a) =>
-      a.nombre === nombre ? { ...a, valor: value } : a
-    );
-    setAspectos(nuevos);
+  // Mapping entre texto mostrado en tabla y columna real en BD
+  const mapNombreToColumn: Record<string, keyof Aspectos> = {
+    "SISTEMATICIDAD Y AMPLITUD": "sistematicidad",
+    PROACTIVIDAD: "proactividad",
+    "CICLOS DE EVALUACIÓN Y MEJORAMIENTO": "ciclo_evaluacion",
+    "DESPLIEGUE A LA INSTITUCIÓN": "despliegue_institucion",
+    "DESPLIEGUE AL CLIENTE INTERNO Y/O EXTERNO": "despliegue_cliente",
+    PERTINENCIA: "pertinencia",
+    CONSISTENCIA: "consistencia",
+    "AVANCE A LA MEDICIÓN": "avance_medicion",
+    TENDENCIA: "tendencia",
+    COMPARACIÓN: "comparacion",
+  };
+
+  const handleChange = async (nombre: string, value: string) => {
+    const num = Number(value);
+    if (!num) return;
+
+    const key = mapNombreToColumn[nombre];
+
+    // 1️⃣ Actualizar estado local con tipado correcto
+    setAspectos((prev) => ({
+      ...prev,
+      [key]: num,
+    }));
+
+    // 2️⃣ Guardar en backend
+    try {
+      await api(`/evaluacion/cuantitativa`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          autoevaluacionId,
+          nombre,
+          valor: num,
+        }),
+      });
+      toast.success(`Guardado ${nombre}: ${num}`);
+    } catch (error) {
+      console.error("Error guardando:", error);
+      toast.error("Error al guardar en el servidor");
+    }
   };
 
   return (
@@ -52,7 +112,9 @@ export const AspectosTable = ({
         <tbody>
           {Object.entries(categorias).map(([categoria, items]) =>
             items.map((nombre, idx) => {
-              const aspecto = aspectos.find((a) => a.nombre === nombre);
+              const key = mapNombreToColumn[nombre];
+              const valor = aspectos ? aspectos[key] ?? "" : "";
+
               return (
                 <tr
                   key={nombre}
@@ -70,15 +132,18 @@ export const AspectosTable = ({
                     {nombre}
                   </td>
                   <td className="border border-gray-300 px-3 py-1 text-center">
-                    <input
-                      type="number"
-                      value={aspecto?.valor ?? ""}
+                    <select
+                      value={valor.toString()}
                       onChange={(e) => handleChange(nombre, e.target.value)}
-                      min={0}
-                      max={5}
-                      className="w-14 border border-gray-300 rounded-md text-center px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-verdeClaro text-sm"
-                      placeholder="0"
-                    />
+                      className="w-16 border border-gray-300 rounded-md text-center px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-verdeClaro text-sm"
+                    >
+                      <option value="">-</option>
+                      {[1, 2, 3, 4, 5].map((n) => (
+                        <option key={n} value={n}>
+                          {n}
+                        </option>
+                      ))}
+                    </select>
                   </td>
                 </tr>
               );

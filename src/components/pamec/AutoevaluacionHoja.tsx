@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import CalificacionGeneralInput from "./CalificacionGeneralInput";
 import CriteriosToggle from "./CriteriosToggle";
 import QualitativeList from "./QualitativeList";
-import { AspectosTable } from "./AspectosTable";
+import { AspectosTable, Aspectos } from "./AspectosTable"; // 👈 usamos el tipo
 import { api } from "@/app/lib/api";
 import {
   ChevronDown,
@@ -14,8 +14,7 @@ import {
   Upload,
 } from "lucide-react";
 
-type Aspecto = { grupo: string; nombre: string; valor?: number | string };
-
+// Evidencias
 type Evidencia = {
   id: number;
   nombre: string;
@@ -43,8 +42,26 @@ export default function AutoevaluacionHoja({
 }) {
   const estandarId = estandar.id ?? estandar.estandarId;
 
-  // Estados
-  const [aspectos, setAspectos] = useState<Aspecto[]>([]);
+  // 📊 Estado cuantitativa como objeto (no array)
+  const [aspectos, setAspectos] = useState<Aspectos>({
+    sistematicidad: 0,
+    proactividad: 0,
+    ciclo_evaluacion: 0,
+    despliegue_institucion: 0,
+    despliegue_cliente: 0,
+    pertinencia: 0,
+    consistencia: 0,
+    avance_medicion: 0,
+    tendencia: 0,
+    comparacion: 0,
+    total_enfoque: 0,
+    total_implementacion: 0,
+    total_resultados: 0,
+    total_estandar: 0,
+    calificacion: 0,
+  });
+
+  // 📋 Estados cualitativa
   const [fortalezas, setFortalezas] = useState<string[]>([]);
   const [oportunidades, setOportunidades] = useState<string[]>([]);
   const [efectoOportunidades, setEfectoOportunidades] = useState<string[]>([]);
@@ -115,88 +132,39 @@ export default function AutoevaluacionHoja({
     uploadingRef.current = false;
   };
 
-  // 🔄 Cargar datos iniciales (solo depende de estandarId y autoevaluacionId)
+  // 🔄 Cargar datos iniciales
   useEffect(() => {
     if (!estandarId) return;
 
     const cargarDatos = async () => {
       try {
-        // --- Calificaciones ---
-        let calificacion = null;
+        // --- Cuantitativa ---
         try {
-          calificacion = await api(
+          const calificacion = (await api(
             `/evaluacion/estandares/${estandarId}/calificaciones`
-          );
+          )) as Partial<Aspectos> | null;
+
+          if (calificacion && typeof calificacion === "object") {
+            setAspectos({
+              sistematicidad: calificacion.sistematicidad ?? 0,
+              proactividad: calificacion.proactividad ?? 0,
+              ciclo_evaluacion: calificacion.ciclo_evaluacion ?? 0,
+              despliegue_institucion: calificacion.despliegue_institucion ?? 0,
+              despliegue_cliente: calificacion.despliegue_cliente ?? 0,
+              pertinencia: calificacion.pertinencia ?? 0,
+              consistencia: calificacion.consistencia ?? 0,
+              avance_medicion: calificacion.avance_medicion ?? 0,
+              tendencia: calificacion.tendencia ?? 0,
+              comparacion: calificacion.comparacion ?? 0,
+              total_enfoque: calificacion.total_enfoque ?? 0,
+              total_implementacion: calificacion.total_implementacion ?? 0,
+              total_resultados: calificacion.total_resultados ?? 0,
+              total_estandar: calificacion.total_estandar ?? 0,
+              calificacion: calificacion.calificacion ?? 0,
+            });
+          }
         } catch (err) {
           console.warn("⚠️ No se encontró calificación guardada:", err);
-        }
-
-        if (calificacion && typeof calificacion === "object") {
-          type Calificacion = {
-            sistematicidad?: number | string;
-            proactividad?: number | string;
-            ciclo_evaluacion?: number | string;
-            despliegue_institucion?: number | string;
-            despliegue_cliente?: number | string;
-            pertinencia?: number | string;
-            consistencia?: number | string;
-            avance_medicion?: number | string;
-            tendencia?: number | string;
-            comparacion?: number | string;
-          };
-          const cal = calificacion as Calificacion;
-          setAspectos([
-            {
-              nombre: "SISTEMATICIDAD Y AMPLITUD",
-              valor: cal.sistematicidad,
-              grupo: estandar.grupo,
-            },
-            {
-              nombre: "PROACTIVIDAD",
-              valor: cal.proactividad,
-              grupo: estandar.grupo,
-            },
-            {
-              nombre: "CICLOS DE EVALUACIÓN Y MEJORAMIENTO",
-              valor: cal.ciclo_evaluacion,
-              grupo: estandar.grupo,
-            },
-            {
-              nombre: "DESPLIEGUE A LA INSTITUCIÓN",
-              valor: cal.despliegue_institucion,
-              grupo: estandar.grupo,
-            },
-            {
-              nombre: "DESPLIEGUE AL CLIENTE INTERNO Y/O EXTERNO",
-              valor: cal.despliegue_cliente,
-              grupo: estandar.grupo,
-            },
-            {
-              nombre: "PERTINENCIA",
-              valor: cal.pertinencia,
-              grupo: estandar.grupo,
-            },
-            {
-              nombre: "CONSISTENCIA",
-              valor: cal.consistencia,
-              grupo: estandar.grupo,
-            },
-            {
-              nombre: "AVANCE A LA MEDICIÓN",
-              valor: cal.avance_medicion,
-              grupo: estandar.grupo,
-            },
-            {
-              nombre: "TENDENCIA",
-              valor: cal.tendencia,
-              grupo: estandar.grupo,
-            },
-            {
-              nombre: "COMPARACIÓN",
-              valor: cal.comparacion,
-              grupo: estandar.grupo,
-            },
-          ]);
         }
 
         // --- Cualitativa ---
@@ -251,47 +219,29 @@ export default function AutoevaluacionHoja({
 
     setLoading(true);
     cargarDatos();
-  }, [estandarId, autoevaluacionId, estandar.grupo]);
+  }, [estandarId, autoevaluacionId]);
 
-  // Helpers
-  const get = (nombre: string): number => {
-    const asp = aspectos.find((a) => a.nombre === nombre);
-    const v =
-      typeof asp?.valor === "number"
-        ? asp?.valor
-        : parseInt(String(asp?.valor ?? "0"));
-    return Number.isFinite(v) ? v : 0;
-  };
-
-  const sum = (nombres: string[]): number =>
-    nombres.reduce((acc, nom) => acc + get(nom), 0);
-
-  const calcularTotalEstandar = (): number =>
-    sum([
-      "SISTEMATICIDAD Y AMPLITUD",
-      "PROACTIVIDAD",
-      "CICLOS DE EVALUACIÓN Y MEJORAMIENTO",
-      "DESPLIEGUE A LA INSTITUCIÓN",
-      "DESPLIEGUE AL CLIENTE INTERNO Y/O EXTERNO",
-      "PERTINENCIA",
-      "CONSISTENCIA",
-      "AVANCE A LA MEDICIÓN",
-      "TENDENCIA",
-      "COMPARACIÓN",
-    ]);
-
+  // 📊 Calcular promedio
   const calificacionPromedio = () => {
-    const nums = aspectos
-      .map((a) =>
-        typeof a.valor === "number" ? a.valor : parseInt(String(a.valor ?? "0"))
-      )
-      .filter((v) => Number.isFinite(v) && v > 0) as number[];
+    const nums = [
+      aspectos.sistematicidad,
+      aspectos.proactividad,
+      aspectos.ciclo_evaluacion,
+      aspectos.despliegue_institucion,
+      aspectos.despliegue_cliente,
+      aspectos.pertinencia,
+      aspectos.consistencia,
+      aspectos.avance_medicion,
+      aspectos.tendencia,
+      aspectos.comparacion,
+    ].filter((v) => Number.isFinite(v) && v > 0);
+
     if (!nums.length) return "0.00";
     const suma = nums.reduce((acc, v) => acc + v, 0);
     return (suma / nums.length).toFixed(2);
   };
 
-  // Guardar
+  // 📝 Guardar hoja completa
   const guardarHoja = async () => {
     if (!estandarId) return alert("No se encontró el ID del estándar.");
     try {
@@ -300,33 +250,31 @@ export default function AutoevaluacionHoja({
       const calificacionPayload = {
         autoevaluacionId,
         estandarId,
-        sistematicidad: get("SISTEMATICIDAD Y AMPLITUD"),
-        proactividad: get("PROACTIVIDAD"),
-        ciclo_evaluacion: get("CICLOS DE EVALUACIÓN Y MEJORAMIENTO"),
-        total_enfoque: sum([
-          "SISTEMATICIDAD Y AMPLITUD",
-          "PROACTIVIDAD",
-          "CICLOS DE EVALUACIÓN Y MEJORAMIENTO",
-        ]),
-        despliegue_institucion: get("DESPLIEGUE A LA INSTITUCIÓN"),
-        despliegue_cliente: get("DESPLIEGUE AL CLIENTE INTERNO Y/O EXTERNO"),
-        total_implementacion: sum([
-          "DESPLIEGUE A LA INSTITUCIÓN",
-          "DESPLIEGUE AL CLIENTE INTERNO Y/O EXTERNO",
-        ]),
-        pertinencia: get("PERTINENCIA"),
-        consistencia: get("CONSISTENCIA"),
-        avance_medicion: get("AVANCE A LA MEDICIÓN"),
-        tendencia: get("TENDENCIA"),
-        comparacion: get("COMPARACIÓN"),
-        total_resultados: sum([
-          "PERTINENCIA",
-          "CONSISTENCIA",
-          "AVANCE A LA MEDICIÓN",
-          "TENDENCIA",
-          "COMPARACIÓN",
-        ]),
-        total_estandar: calcularTotalEstandar(),
+        ...aspectos, // enviamos todos los campos de aspectos
+        // recalculamos totales en front por seguridad
+        total_enfoque:
+          aspectos.sistematicidad +
+          aspectos.proactividad +
+          aspectos.ciclo_evaluacion,
+        total_implementacion:
+          aspectos.despliegue_institucion + aspectos.despliegue_cliente,
+        total_resultados:
+          aspectos.pertinencia +
+          aspectos.consistencia +
+          aspectos.avance_medicion +
+          aspectos.tendencia +
+          aspectos.comparacion,
+        total_estandar:
+          aspectos.sistematicidad +
+          aspectos.proactividad +
+          aspectos.ciclo_evaluacion +
+          aspectos.despliegue_institucion +
+          aspectos.despliegue_cliente +
+          aspectos.pertinencia +
+          aspectos.consistencia +
+          aspectos.avance_medicion +
+          aspectos.tendencia +
+          aspectos.comparacion,
         calificacion: parseFloat(calificacionPromedio()),
         observaciones: "",
       };
@@ -428,7 +376,6 @@ export default function AutoevaluacionHoja({
 
                 {/* 📎 Subir evidencias */}
                 <div className="mb-8 p-5 bg-white border border-gray-200 rounded-xl shadow-sm">
-                  {/* Título */}
                   <h4 className="text-lg font-semibold text-verdeOscuro mb-3 flex items-center gap-2">
                     <Paperclip className="w-5 h-5" />
                     Evidencias de fortalezas
@@ -437,7 +384,6 @@ export default function AutoevaluacionHoja({
                     Adjunta archivos en formato PDF, Word o imágenes.
                   </p>
 
-                  {/* Input de archivos */}
                   <label className="flex items-center justify-center w-full cursor-pointer bg-verdeClaro text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-verdeOscuro transition">
                     <Upload className="w-4 h-4 mr-2" />
                     Subir archivos
@@ -450,7 +396,6 @@ export default function AutoevaluacionHoja({
                     />
                   </label>
 
-                  {/* Lista de evidencias */}
                   {evidencias.length > 0 && (
                     <ul className="mt-4 space-y-2">
                       {evidencias.map((ev, idx) => (
@@ -535,7 +480,11 @@ export default function AutoevaluacionHoja({
             open={mostrarCuantitativa}
             setOpen={setMostrarCuantitativa}
           >
-            <AspectosTable aspectos={aspectos} setAspectos={setAspectos} />
+            <AspectosTable
+              aspectos={aspectos}
+              setAspectos={setAspectos}
+              autoevaluacionId={autoevaluacionId}
+            />
             <div className="mt-4">
               <CalificacionGeneralInput promedio={calificacionPromedio()} />
             </div>
