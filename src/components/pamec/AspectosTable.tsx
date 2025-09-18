@@ -3,7 +3,6 @@
 import { api } from "@/app/lib/api";
 import { toast } from "sonner";
 
-// 🔑 Tipo fuerte que refleja tu entity CalificacionEstandar en BD
 export type Aspectos = {
   sistematicidad: number;
   proactividad: number;
@@ -26,10 +25,14 @@ export const AspectosTable = ({
   aspectos,
   setAspectos,
   autoevaluacionId,
+  estandarId,
+  confirmado = false,
 }: {
   aspectos: Aspectos;
   setAspectos: React.Dispatch<React.SetStateAction<Aspectos>>;
   autoevaluacionId: number;
+  estandarId: number;
+  confirmado?: boolean;
 }) => {
   const categorias = {
     ENFOQUE: [
@@ -50,7 +53,6 @@ export const AspectosTable = ({
     ],
   };
 
-  // Mapping entre texto mostrado en tabla y columna real en BD
   const mapNombreToColumn: Record<string, keyof Aspectos> = {
     "SISTEMATICIDAD Y AMPLITUD": "sistematicidad",
     PROACTIVIDAD: "proactividad",
@@ -65,12 +67,14 @@ export const AspectosTable = ({
   };
 
   const handleChange = async (nombre: string, value: string) => {
+    if (confirmado) return; // 🚫 No permitir cambios si ya está confirmado
+
     const num = Number(value);
     if (!num) return;
 
     const key = mapNombreToColumn[nombre];
 
-    // 1️⃣ Actualizar estado local con tipado correcto
+    // 1️⃣ Actualizar estado local
     setAspectos((prev) => ({
       ...prev,
       [key]: num,
@@ -82,6 +86,7 @@ export const AspectosTable = ({
         method: "PATCH",
         body: JSON.stringify({
           autoevaluacionId,
+          estandarId, // 👈 ahora sí enviamos estandarId
           nombre,
           valor: num,
         }),
@@ -94,7 +99,7 @@ export const AspectosTable = ({
   };
 
   return (
-    <div className="mt-8 font-nunito max-w-4xl mx-auto ">
+    <div className="mt-8 font-nunito max-w-4xl mx-auto">
       <table className="w-full table-auto border border-gray-600 shadow-sm rounded-lg overflow-hidden text-sm">
         <thead className="bg-[#f9fafb] text-gray-700 uppercase tracking-wide">
           <tr>
@@ -134,8 +139,13 @@ export const AspectosTable = ({
                   <td className="border border-gray-300 px-3 py-1 text-center">
                     <select
                       value={valor.toString()}
+                      disabled={confirmado} // 🚫 bloqueado si está confirmado
                       onChange={(e) => handleChange(nombre, e.target.value)}
-                      className="w-16 border border-gray-300 rounded-md text-center px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-verdeClaro text-sm"
+                      className={`w-16 border rounded-md text-center px-1 py-0.5 text-sm ${
+                        confirmado
+                          ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                          : "focus:outline-none focus:ring-1 focus:ring-verdeClaro"
+                      }`}
                     >
                       <option value="">-</option>
                       {[1, 2, 3, 4, 5].map((n) => (

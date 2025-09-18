@@ -23,12 +23,13 @@ interface Props {
   tipo: Tipo;
   estandarId: number;
   autoevaluacionId: number;
-  items: string[]; // usado en todo excepto oportunidades
+  items: string[];
   setItems: (items: string[]) => void;
+  confirmado?: boolean; // 👈 nuevo
 }
 
 type Proceso = { id: number; nombre_proceso: string };
-type Oportunidad = { id: number; descripcion: string; proceso?: Proceso };
+type Oportunidad = { id: number; descripcion: string; procesos: Proceso[] };
 
 export default function QualitativeList({
   tipo,
@@ -36,17 +37,18 @@ export default function QualitativeList({
   autoevaluacionId,
   items,
   setItems,
+  confirmado = false,
 }: Props) {
-  // Estado general
   const [nuevo, setNuevo] = useState("");
   const [agregando, setAgregando] = useState(false);
 
   // Solo para oportunidades
   const [procesos, setProcesos] = useState<Proceso[]>([]);
   const [oportunidades, setOportunidades] = useState<Oportunidad[]>([]);
-  const [nuevoProcesoId, setNuevoProcesoId] = useState<number | "">("");
+  const [procesosSeleccionados, setProcesosSeleccionados] = useState<number[]>(
+    []
+  );
 
-  // Etiquetas legibles
   const labels: Record<Tipo, string> = {
     fortalezas: "Fortalezas",
     oportunidades_mejora: "Oportunidades de Mejora",
@@ -55,25 +57,30 @@ export default function QualitativeList({
     limitantes_acciones: "Limitantes de las Acciones",
   };
 
-  // Cargar procesos y oportunidades si es el caso
+  // 🔄 Cargar procesos y oportunidades
   useEffect(() => {
     if (tipo === "oportunidades_mejora") {
       api<Proceso[]>("/processes")
         .then(setProcesos)
         .catch(() => toast.error("Error cargando procesos"));
-      api<Oportunidad[]>(`/evaluacion/oportunidades-mejora/${autoevaluacionId}`)
+
+      api<Oportunidad[]>(
+        `/evaluacion/oportunidades-mejora/${autoevaluacionId}/estandar/${estandarId}`
+      )
         .then(setOportunidades)
         .catch(() => toast.error("Error cargando oportunidades"));
     }
-  }, [tipo, autoevaluacionId]);
+  }, [tipo, autoevaluacionId, estandarId]);
 
-  // ➕ Guardar nuevo ítem
+  // Guardar
   const guardar = async () => {
+    if (confirmado) return;
     const texto = nuevo.trim();
     if (!texto) return toast.warning("Debes escribir algo antes de guardar");
 
     if (tipo === "oportunidades_mejora") {
-      if (!nuevoProcesoId) return toast.warning("Selecciona un proceso");
+      if (procesosSeleccionados.length === 0)
+        return toast.warning("Selecciona al menos un proceso");
 
       try {
         const nueva = await api<Oportunidad>(
@@ -84,13 +91,13 @@ export default function QualitativeList({
             body: JSON.stringify({
               evaluacionId: autoevaluacionId,
               descripcion: texto,
-              procesoId: nuevoProcesoId,
+              procesosIds: procesosSeleccionados,
             }),
           }
         );
         setOportunidades([...oportunidades, nueva]);
         setNuevo("");
-        setNuevoProcesoId("");
+        setProcesosSeleccionados([]);
         setAgregando(false);
         toast.success("Oportunidad agregada");
       } catch (err) {
@@ -118,8 +125,46 @@ export default function QualitativeList({
     }
   };
 
-  // 🗑️ Eliminar
+  // Toggle procesos en oportunidad
+  const toggleProcesoEnOportunidad = async (
+    oportunidadId: number,
+    procesoId: number,
+    checked: boolean
+  ) => {
+    if (confirmado) return;
+    const oportunidad = oportunidades.find((o) => o.id === oportunidadId);
+    if (!oportunidad) return;
+
+    const procesosIds = checked
+      ? [...oportunidad.procesos.map((p) => p.id), procesoId]
+      : oportunidad.procesos.map((p) => p.id).filter((id) => id !== procesoId);
+
+    try {
+      const actualizada = await api<Oportunidad>(
+        "/evaluacion/oportunidades-mejora",
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: oportunidadId,
+            descripcion: oportunidad.descripcion,
+            procesosIds,
+          }),
+        }
+      );
+
+      setOportunidades((prev) =>
+        prev.map((o) => (o.id === oportunidadId ? actualizada : o))
+      );
+    } catch (err) {
+      console.error("❌ Error actualizando:", err);
+      toast.error("No se pudo actualizar procesos");
+    }
+  };
+
+  // Eliminar
   const eliminar = async (idOrIndex: number) => {
+    if (confirmado) return;
     if (!confirm("¿Deseas eliminar este ítem?")) return;
 
     if (tipo === "oportunidades_mejora") {
@@ -159,132 +204,197 @@ export default function QualitativeList({
         {labels[tipo]}
       </h4>
 
-      {/* Estado vacío */}
-      {tipo === "oportunidades_mejora"
-        ? oportunidades.length === 0 && (
-            <p className="text-sm text-gray-500 italic mb-3">
-              Aún no has agregado {labels[tipo].toLowerCase()}.
-            </p>
-          )
-        : items.length === 0 && (
-            <p className="text-sm text-gray-500 italic mb-3">
-              Aún no has agregado {labels[tipo].toLowerCase()}.
-            </p>
-          )}
-
-      {/* Lista de ítems */}
-      <ul className="space-y-3">
-        {tipo === "oportunidades_mejora"
-          ? oportunidades.map((o) => (
+      {tipo === "oportunidades_mejora" ? (
+        <>
+          {/* Lista */}
+          <ul className="space-y-3">
+            {oportunidades.map((o) => (
               <li
                 key={o.id}
-                className="flex flex-col md:flex-row md:items-center gap-3 bg-gray-50 border border-gray-200 rounded-lg p-3"
+                className="bg-gray-50 border rounded-lg p-3 space-y-2"
               >
                 <textarea
                   value={o.descripcion}
                   readOnly
-                  className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg bg-gray-100"
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-gray-100"
                   rows={2}
                 />
-                <select
-                  value={o.proceso?.id || ""}
-                  disabled
-                  className="w-52 text-sm border border-gray-300 rounded-lg bg-gray-100"
-                >
-                  <option value="">Sin proceso</option>
-                  {procesos.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.nombre_proceso}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  onClick={() => eliminar(o.id)}
-                  className="text-red-500 hover:text-red-700 transition"
-                  title="Eliminar"
-                >
-                  <Trash2 className="w-5 h-5" />
-                </button>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {procesos.map((p) => {
+                    const checked = o.procesos?.some(
+                      (proc) => proc.id === p.id
+                    );
+                    return (
+                      <label
+                        key={p.id}
+                        className="flex items-center gap-2 text-sm"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          disabled={confirmado}
+                          onChange={(e) =>
+                            toggleProcesoEnOportunidad(
+                              o.id,
+                              p.id,
+                              e.target.checked
+                            )
+                          }
+                        />
+                        {p.nombre_proceso}
+                      </label>
+                    );
+                  })}
+                </div>
+                {!confirmado && (
+                  <button
+                    type="button"
+                    onClick={() => eliminar(o.id)}
+                    className="text-red-500 hover:text-red-700 transition text-sm"
+                  >
+                    <Trash2 className="w-4 h-4 inline-block mr-1" />
+                    Eliminar
+                  </button>
+                )}
               </li>
-            ))
-          : items.map((item, index) => (
+            ))}
+          </ul>
+
+          {/* Nuevo */}
+          {!confirmado &&
+            (agregando ? (
+              <div className="mt-4 bg-gray-50 p-4 rounded-lg border space-y-3">
+                <textarea
+                  value={nuevo}
+                  onChange={(e) => setNuevo(e.target.value)}
+                  placeholder="Escribe una oportunidad de mejora..."
+                  className="block w-full px-3 py-2 text-sm border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-verdeClaro bg-white"
+                />
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {procesos.map((p) => (
+                    <label
+                      key={p.id}
+                      className="flex items-center gap-2 text-sm"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={procesosSeleccionados.includes(p.id)}
+                        onChange={(e) =>
+                          setProcesosSeleccionados((prev) =>
+                            e.target.checked
+                              ? [...prev, p.id]
+                              : prev.filter((id) => id !== p.id)
+                          )
+                        }
+                      />
+                      {p.nombre_proceso}
+                    </label>
+                  ))}
+                </div>
+                <div className="flex gap-3 justify-end">
+                  <button
+                    onClick={guardar}
+                    className="flex items-center gap-2 bg-verdeOscuro text-white text-sm px-4 py-2 rounded-lg hover:bg-verdeClaro transition"
+                  >
+                    <Save className="w-4 h-4" /> Guardar
+                  </button>
+                  <button
+                    onClick={() => {
+                      setNuevo("");
+                      setProcesosSeleccionados([]);
+                      setAgregando(false);
+                    }}
+                    className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800 transition"
+                  >
+                    <XCircle className="w-4 h-4" /> Cancelar
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setAgregando(true)}
+                className="mt-4 flex items-center gap-2 text-verdeOscuro text-sm font-semibold hover:text-verdeClaro transition"
+              >
+                <PlusCircle className="w-5 h-5" /> Agregar
+              </button>
+            ))}
+        </>
+      ) : (
+        <>
+          {/* Otros tipos */}
+          <ul className="space-y-3">
+            {items.map((item, index) => (
               <li
                 key={index}
-                className="relative group flex items-start gap-2 bg-gray-50 border border-gray-200 rounded-lg p-3"
+                className="flex items-start gap-2 bg-gray-50 border rounded-lg p-3"
               >
                 <textarea
                   value={item}
+                  readOnly={confirmado}
                   onChange={(e) => {
+                    if (confirmado) return;
                     const nuevos = [...items];
                     nuevos[index] = e.target.value;
                     setItems(nuevos);
                   }}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-verdeClaro focus:outline-none resize-y overflow-hidden bg-white"
+                  className={`w-full px-3 py-2 text-sm border rounded-lg resize-y ${
+                    confirmado
+                      ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+                      : "focus:ring-2 focus:ring-verdeClaro bg-white"
+                  }`}
                   rows={2}
                 />
-                <button
-                  type="button"
-                  onClick={() => eliminar(index)}
-                  className="text-red-500 hover:text-red-700 transition mt-1 opacity-0 group-hover:opacity-100"
-                  title="Eliminar"
-                >
-                  <Trash2 className="w-5 h-5" />
-                </button>
+                {!confirmado && (
+                  <button
+                    type="button"
+                    onClick={() => eliminar(index)}
+                    className="text-red-500 hover:text-red-700 transition mt-1"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                )}
               </li>
             ))}
-      </ul>
+          </ul>
 
-      {/* Nuevo ítem */}
-      {agregando ? (
-        <div className="mt-4 bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-3">
-          <textarea
-            value={nuevo}
-            onChange={(e) => setNuevo(e.target.value)}
-            placeholder={`Escribe una ${labels[tipo].toLowerCase()}...`}
-            className="block w-full px-3 py-2 text-sm border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-verdeClaro focus:outline-none bg-white"
-          />
-          {tipo === "oportunidades_mejora" && (
-            <select
-              value={nuevoProcesoId}
-              onChange={(e) => setNuevoProcesoId(Number(e.target.value))}
-              className="block w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-verdeClaro focus:outline-none bg-white"
-            >
-              <option value="">Selecciona un proceso...</option>
-              {procesos.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.nombre_proceso}
-                </option>
-              ))}
-            </select>
-          )}
-          <div className="flex gap-3 justify-end">
-            <button
-              onClick={guardar}
-              className="flex items-center gap-2 bg-verdeOscuro text-white text-sm px-4 py-2 rounded-lg hover:bg-verdeClaro transition"
-            >
-              <Save className="w-4 h-4" /> Guardar
-            </button>
-            <button
-              onClick={() => {
-                setNuevo("");
-                setNuevoProcesoId("");
-                setAgregando(false);
-              }}
-              className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800 transition"
-            >
-              <XCircle className="w-4 h-4" /> Cancelar
-            </button>
-          </div>
-        </div>
-      ) : (
-        <button
-          type="button"
-          onClick={() => setAgregando(true)}
-          className="mt-4 flex items-center gap-2 text-verdeOscuro text-sm font-semibold hover:text-verdeClaro transition"
-        >
-          <PlusCircle className="w-5 h-5" /> Agregar
-        </button>
+          {!confirmado &&
+            (agregando ? (
+              <div className="mt-4 bg-gray-50 p-4 rounded-lg border space-y-3">
+                <textarea
+                  value={nuevo}
+                  onChange={(e) => setNuevo(e.target.value)}
+                  placeholder={`Escribe una ${labels[tipo].toLowerCase()}...`}
+                  className="block w-full px-3 py-2 text-sm border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-verdeClaro bg-white"
+                />
+                <div className="flex gap-3 justify-end">
+                  <button
+                    onClick={guardar}
+                    className="flex items-center gap-2 bg-verdeOscuro text-white text-sm px-4 py-2 rounded-lg hover:bg-verdeClaro transition"
+                  >
+                    <Save className="w-4 h-4" /> Guardar
+                  </button>
+                  <button
+                    onClick={() => {
+                      setNuevo("");
+                      setAgregando(false);
+                    }}
+                    className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800 transition"
+                  >
+                    <XCircle className="w-4 h-4" /> Cancelar
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setAgregando(true)}
+                className="mt-4 flex items-center gap-2 text-verdeOscuro text-sm font-semibold hover:text-verdeClaro transition"
+              >
+                <PlusCircle className="w-5 h-5" /> Agregar
+              </button>
+            ))}
+        </>
       )}
     </div>
   );
