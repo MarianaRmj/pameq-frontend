@@ -91,6 +91,7 @@ export default function QualitativeList({
             body: JSON.stringify({
               evaluacionId: autoevaluacionId,
               descripcion: texto,
+              estandarId: estandarId,
               procesosIds: procesosSeleccionados,
             }),
           }

@@ -70,7 +70,10 @@ export const AspectosTable = ({
     if (confirmado) return; // 🚫 No permitir cambios si ya está confirmado
 
     const num = Number(value);
-    if (!num) return;
+    if (isNaN(num)) return; // solo ignora si no es un número
+
+    // 👉 Guardamos posición actual del scroll
+    const scrollY = window.scrollY;
 
     const key = mapNombreToColumn[nombre];
 
@@ -86,7 +89,7 @@ export const AspectosTable = ({
         method: "PATCH",
         body: JSON.stringify({
           autoevaluacionId,
-          estandarId, // 👈 ahora sí enviamos estandarId
+          estandarId,
           nombre,
           valor: num,
         }),
@@ -95,11 +98,14 @@ export const AspectosTable = ({
     } catch (error) {
       console.error("Error guardando:", error);
       toast.error("Error al guardar en el servidor");
+    } finally {
+      // 👉 Restauramos scroll después de renderizar
+      window.scrollTo(0, scrollY);
     }
   };
 
   return (
-    <div className="mt-8 font-nunito max-w-4xl mx-auto">
+    <div className="mt-8 font-nunito max-w-4xl mx-auto overflow-visible">
       <table className="w-full table-auto border border-gray-600 shadow-sm rounded-lg overflow-hidden text-sm">
         <thead className="bg-[#f9fafb] text-gray-700 uppercase tracking-wide">
           <tr>
