@@ -421,6 +421,7 @@ export default function AutoevaluacionHoja({
               setAspectos={setAspectos}
               autoevaluacionId={autoevaluacionId}
               estandarId={estandarId ?? 0}
+              confirmado={confirmado}
             />
             <div className="mt-4">
               <CalificacionGeneralInput promedio={calificacionPromedio()} />
