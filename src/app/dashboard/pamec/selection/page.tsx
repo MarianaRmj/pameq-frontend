@@ -3,63 +3,71 @@
 import { useEffect, useState } from "react";
 import { api } from "@/app/lib/api";
 import { toast } from "sonner";
+import { useConfirm } from "@/hooks/useConfirm";
 
-type RecuentoProceso = {
-  id: number;
-  proceso: string;
-  oportunidades: number;
-};
+import {
+  RecuentoProceso,
+  SeleccionGuardada,
+  EstandarConOportunidad,
+} from "./type";
 
-type SeleccionGuardada = {
-  id: number;
-  proceso: {
-    id: number;
-    nombre_proceso: string;
-  };
-  seleccionado: boolean;
-  observaciones: string;
-  usuario_id: number;
-};
+import ProcessesTable from "./ProcessesTable";
+import StandardsTable from "./StandardsTable";
 
 export default function SelectionPage() {
-  const cicloId = 2025; // 🔧 ajusta al ciclo real
-  const [data, setData] = useState<RecuentoProceso[]>([]);
+  const { confirm, ConfirmModal } = useConfirm();
+  const cicloId = 2025;
+
+  const [procesos, setProcesos] = useState<RecuentoProceso[]>([]);
+  const [estandares, setEstandares] = useState<EstandarConOportunidad[]>([]);
   const [loading, setLoading] = useState(true);
+
   const [selecciones, setSelecciones] = useState<
     Record<number, { seleccion: boolean; observaciones: string }>
   >({});
+  const [guardados, setGuardados] = useState<Record<number, boolean>>({});
 
+  // 📌 Cargar datos iniciales
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
 
-        // 1️⃣ Recuento de oportunidades
+        // Procesos con recuento de oportunidades
         const recuento = await api<RecuentoProceso[]>(
           `/processes/recuento/${cicloId}`
         );
 
-        // 2️⃣ Selecciones guardadas
+        // Procesos ya seleccionados en BD
         const seleccionados = await api<SeleccionGuardada[]>(
           `/processes/seleccionados/${cicloId}`
         );
 
-        // 3️⃣ Inicializa estado combinando recuento + selecciones guardadas
-        const init: Record<
+        // Estándares con oportunidades de mejora
+        const estandaresResp = await api<EstandarConOportunidad[]>(
+          `/autoevaluaciones/${cicloId}/oportunidades`
+        );
+
+        // Inicializar estado local
+        const initSelecciones: Record<
           number,
           { seleccion: boolean; observaciones: string }
         > = {};
+        const initGuardados: Record<number, boolean> = {};
 
         recuento.forEach((r) => {
           const saved = seleccionados.find((s) => s.proceso.id === r.id);
-          init[r.id] = {
+          initSelecciones[r.id] = {
             seleccion: saved ? saved.seleccionado : false,
             observaciones: saved ? saved.observaciones : "",
           };
+          if (saved) initGuardados[r.id] = true;
         });
 
-        setData(recuento);
-        setSelecciones(init);
+        setProcesos(recuento);
+        setEstandares(estandaresResp);
+        setSelecciones(initSelecciones);
+        setGuardados(initGuardados);
       } catch (err) {
         console.error("❌ Error cargando datos:", err);
         toast.error("Error cargando datos de selección de procesos");
@@ -71,6 +79,7 @@ export default function SelectionPage() {
     fetchData();
   }, [cicloId]);
 
+  // 📌 Cambios en selección / observaciones
   const handleChange = (
     procesoId: number,
     field: "seleccion" | "observaciones",
@@ -80,93 +89,59 @@ export default function SelectionPage() {
       ...prev,
       [procesoId]: { ...prev[procesoId], [field]: value },
     }));
+    setGuardados((prev) => ({ ...prev, [procesoId]: false }));
   };
 
-  const handleSave = async (row: RecuentoProceso) => {
-    const payload = {
-      cicloId,
-      procesoId: row.id, // ✅ ahora se envía el id del proceso
-      usuarioId: 5, // 🔧 traerlo de sesión real
-      seleccion: selecciones[row.id]?.seleccion,
-      observaciones: selecciones[row.id]?.observaciones,
-    };
-
-    try {
-      await api("/processes/seleccion", {
-        method: "POST",
-        body: JSON.stringify(payload),
-      });
-      toast.success(`Selección guardada para ${row.proceso}`);
-    } catch {
-      toast.error("Error al guardar selección");
+  // 📌 Guardar selección en BD
+  const handleSave = (row: RecuentoProceso) => {
+    const { seleccion, observaciones } = selecciones[row.id] || {};
+    if (seleccion && !observaciones.trim()) {
+      toast.error("Debes ingresar observaciones si marcas selección.");
+      return;
     }
+
+    confirm(
+      `¿Confirmas guardar la selección para el proceso "${row.proceso}"?`,
+      async () => {
+        const payload = {
+          procesoId: row.id,
+          usuarioId: 5, // TODO: traer de sesión real
+          seleccion,
+          observaciones,
+        };
+
+        try {
+          await api("/processes/seleccion", {
+            method: "POST",
+            body: JSON.stringify(payload),
+          });
+          toast.success(`Selección guardada para ${row.proceso}`);
+          setGuardados((prev) => ({ ...prev, [row.id]: true }));
+        } catch {
+          toast.error("Error al guardar selección");
+        }
+      }
+    );
   };
 
   if (loading) return <p className="p-4">Cargando...</p>;
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4 text-[#2C5959]">
-        Selección de Procesos
-      </h1>
-      <table className="w-full border-collapse bg-white rounded-lg shadow-md">
-        <thead className="bg-[#2C5959] text-white">
-          <tr>
-            <th className="px-4 py-2 text-left">Proceso</th>
-            <th className="px-4 py-2 text-center">Oportunidades</th>
-            <th className="px-4 py-2 text-center">Selección (SI/NO)</th>
-            <th className="px-4 py-2 text-left">Observaciones</th>
-            <th className="px-4 py-2 text-center">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.length === 0 ? (
-            <tr>
-              <td colSpan={5} className="text-center py-4 text-gray-500">
-                No hay procesos con oportunidades en este ciclo
-              </td>
-            </tr>
-          ) : (
-            data.map((row) => (
-              <tr
-                key={row.id}
-                className="border-b hover:bg-gray-50 transition-colors"
-              >
-                <td className="px-4 py-2 font-semibold">{row.proceso}</td>
-                <td className="px-4 py-2 text-center">{row.oportunidades}</td>
-                <td className="px-4 py-2 text-center">
-                  <input
-                    type="checkbox"
-                    checked={selecciones[row.id]?.seleccion || false}
-                    onChange={(e) =>
-                      handleChange(row.id, "seleccion", e.target.checked)
-                    }
-                  />
-                </td>
-                <td className="px-4 py-2">
-                  <input
-                    type="text"
-                    value={selecciones[row.id]?.observaciones || ""}
-                    onChange={(e) =>
-                      handleChange(row.id, "observaciones", e.target.value)
-                    }
-                    className="w-full border rounded px-2 py-1 text-sm"
-                    placeholder="Escribe observaciones..."
-                  />
-                </td>
-                <td className="px-4 py-2 text-center">
-                  <button
-                    onClick={() => handleSave(row)}
-                    className="bg-[#2C5959] text-white px-3 py-1 rounded hover:bg-[#246d6d]"
-                  >
-                    Guardar
-                  </button>
-                </td>
-              </tr>
-            ))
-          )}
-        </tbody>
-      </table>
+    <div className="p-6 space-y-10">
+      {/* 📌 Tabla de Procesos */}
+      <ProcessesTable
+        data={procesos}
+        selecciones={selecciones}
+        guardados={guardados}
+        onChange={handleChange}
+        onSave={handleSave}
+      />
+
+      {/* 📌 Tabla de Estándares con Oportunidades */}
+      <StandardsTable estandares={estandares} selecciones={selecciones} />
+
+      {/* 📌 Modal de confirmación */}
+      <ConfirmModal />
     </div>
   );
 }
