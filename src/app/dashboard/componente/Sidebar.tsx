@@ -10,7 +10,6 @@ import {
   FiInfo,
   FiHome,
   FiList,
-  FiSliders,
   FiGrid,
   FiCheckCircle,
   FiTrendingUp,
@@ -142,11 +141,6 @@ export default function Sidebar() {
                 label: "Selección Procesos",
                 href: "/dashboard/pamec/selection",
                 icon: <FiList />,
-              },
-              {
-                label: "Criterios Priorización",
-                href: "/dashboard/pamec/criteria",
-                icon: <FiSliders />,
               },
               {
                 label: "Matriz Priorización",
