@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { api } from "@/app/lib/api";
 import { toast } from "sonner";
-import { Trash2, Save, XCircle, Edit2, PlusCircle } from "lucide-react";
+import { Save, XCircle, PlusCircle } from "lucide-react";
 
 type Proceso = { id: number; nombre_proceso: string };
 type Oportunidad = { id: number; descripcion: string; procesos: Proceso[] };
@@ -203,15 +203,18 @@ export default function OportunidadesList({
                         setEditValue(o.descripcion);
                         setProcesosSel(o.procesos.map((p) => p.id));
                       }}
-                      className="p-2 rounded-full bg-green-100 hover:bg-green-200 text-green-700 transition"
+                      title="Editar"
+                      className="hover:text-verdeOscuro"
                     >
-                      <Edit2 className="w-4 h-4" />
+                      ✏️
                     </button>
+
                     <button
                       onClick={() => eliminar(o.id)}
-                      className="p-2 rounded-full bg-red-100 hover:bg-red-200 text-red-600 transition"
+                      title="Eliminar"
+                      className="hover:text-rose-600"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      🗑️
                     </button>
                   </div>
                 )}

@@ -1,15 +1,11 @@
 "use client";
-import type {
-  Activity,
-  EstadoActividad,
-} from "@/app/dashboard/activities/types";
+import type { Activity } from "@/app/dashboard/activities/types";
 
 export function ActivitiesTable({
   items,
   onEdit,
   onDelete,
   onOpenUpload,
-  onOpenList,
 }: {
   items: Activity[];
   onEdit: (a: Activity) => void;
@@ -17,197 +13,138 @@ export function ActivitiesTable({
   onOpenUpload: (a: Activity) => void;
   onOpenList: (a: Activity) => void;
 }) {
-  // MISMA plantilla para head y filas → columnas alineadas
-  const COLS = "grid grid-cols-[2fr_2fr_2fr_2fr_2fr_2fr_2fr] gap-x-1";
-  // MISMO padding por celda
-  const CELL = "gap-x-2 px-2 py-2";
-
   return (
-    <div className="ui-card overflow-hidden rounded-1xl border border-gray-200 bg-white shadow-sm">
-      {/* Head */}
-      <div className={`${COLS} bg-verdeOscuro/95 text-white`}>
-        <div
-          className={`ui-th ${CELL} text-xs font-nunito  tracking-wide`}
-        >
-          Actividad
-        </div>
-        <div
-          className={`ui-th ${CELL} text-xs font-nunito  tracking-wide`}
-        >
-          Fechas
-        </div>
-        <div
-          className={`ui-th ${CELL} text-xs font-nunito  tracking-wide`}
-        >
-          Responsable
-        </div>
-        <div
-          className={`ui-th ${CELL} text-xs font-nunito  tracking-wide`}
-        >
-          Procesos
-        </div>
-        <div
-          className={`ui-th ${CELL} text-xs font-nunito  tracking-wide`}
-        >
-          Evidencias
-        </div>
-        <div
-          className={`ui-th ${CELL} text-xs font-nunito  tracking-wide`}
-        >
-          Estado
-        </div>
-        <div
-          className={`ui-th ${CELL} text-xs font-nunito  tracking-wide`}
-        >
-          Acciones
-        </div>
-      </div>
+    <div className="ui-card overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+      <table className="w-full table-auto border-collapse">
+        {/* Head */}
+        <thead className="bg-verdeOscuro text-white">
+          <tr>
+            <th className="px-4 py-3 text-left text-xs font-nunito uppercase tracking-wide">
+              Actividad
+            </th>
+            <th className="px-4 py-3 text-left text-xs font-nunito uppercase tracking-wide">
+              Fechas
+            </th>
+            <th className="px-4 py-3 text-left text-xs font-nunito uppercase tracking-wide">
+              Responsable
+            </th>
+            <th className="px-4 py-3 text-left text-xs font-nunito uppercase tracking-wide">
+              Procesos
+            </th>
+            <th className="px-4 py-3 text-center text-xs font-nunito uppercase tracking-wide">
+              Evidencias
+            </th>
+            <th className="px-4 py-3 text-center text-xs font-nunito uppercase tracking-wide">
+              Estado
+            </th>
+            <th className="px-4 py-3 text-right text-xs font-nunito uppercase tracking-wide">
+              Acciones
+            </th>
+          </tr>
+        </thead>
 
-      {/* Body */}
-      {items.length === 0 ? (
-        <div className="flex flex-col items-center justify-center gap-2 px-8 py-16 text-center">
-          <div className="text-4xl">🗓️</div>
-          <p className="text-sm text-gray-500">
-            Aún no hay actividades. Crea la primera.
-          </p>
-        </div>
-      ) : (
-        <div className="divide-y divide-gray-100">
-          {items.map((a, idx) => (
-            <div
-              key={a.id}
-              className={`${COLS} items-center leading-relaxed ${
-                idx % 2 ? "bg-white" : "bg-gray-50/60"
-              } hover:bg-emerald-50/40`}
-            >
+        {/* Body */}
+        <tbody className="divide-y divide-gray-100 text-sm">
+          {items.map((a) => (
+            <tr key={a.id} className="hover:bg-gray-50">
               {/* Actividad */}
-              <div className={`ui-td p-0 ${CELL}`}>
-                <div className="line-clamp-1 text-[15px] font-nunito text-[#102626]">
+              <td className="px-4 py-3">
+                <div className="font-medium text-gray-800">
                   {a.nombre_actividad}
                 </div>
-                <div className="mt-1 text-xs text-gray-500">
-                  {a.lugar || "—"}
-                </div>
-              </div>
+                <div className="text-xs text-gray-500">{a.lugar || "—"}</div>
+              </td>
 
               {/* Fechas */}
-              <div className={`ui-td p-0 ${CELL}`}>
-                <div className="text-[13px] font-medium">
-                  {fmtDateTime(a.fecha_inicio)}
-                </div>
-                <div className="text-xs text-gray-500">
-                  {fmtDateTime(a.fecha_fin)}
-                </div>
-              </div>
+              <td className="px-4 py-3 text-xs text-gray-600">
+                <div>{fmtDateTime(a.fecha_inicio)}</div>
+                <div className="text-gray-400">{fmtDateTime(a.fecha_fin)}</div>
+              </td>
 
               {/* Responsable */}
-              <div className={`ui-td p-1 ${CELL}`}>
-                <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-8 py-2 text-xs text-gray-700 ring-1 ring-gray-200">
-                  ID #{a.responsableId}
-                </span>
-              </div>
+              <td className="px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <div className="h-6 w-6 flex items-center justify-center rounded-full bg-verdeClaro text-white text-xs font-bold">
+                    {a.responsable?.nombre?.[0] ?? "?"}
+                  </div>
+                  <span className="text-sm text-gray-700">
+                    {a.responsable?.nombre ?? "—"}
+                  </span>
+                </div>
+              </td>
 
               {/* Procesos */}
-              <div className={`ui-td p-0 ${CELL}`}>
-                {a.procesos_invitados?.length ? (
-                  <div className="flex max-w-full flex-wrap gap-1">
-                    {a.procesos_invitados.slice(0, 2).map((p) => (
-                      <span
-                        key={p.id}
-                        title={p.nombre}
-                        className="truncate rounded-full bg-emerald-50 px-8 py-2 text-[11px] text-emerald-700 ring-1 ring-emerald-200"
-                      >
-                        {p.nombre}
-                      </span>
-                    ))}
-                    {a.procesos_invitados.length > 2 && (
-                      <span className="rounded-full bg-gray-100 px-8 py-2 text-[11px] text-gray-700 ring-1 ring-gray-200">
-                        +{a.procesos_invitados.length - 2}
-                      </span>
-                    )}
-                  </div>
-                ) : (
-                  <span className="text-sm text-gray-400">—</span>
-                )}
-              </div>
+              <td className="px-4 py-3">
+                <div className="flex flex-wrap gap-1">
+                  {a.procesos?.map((p) => (
+                    <span
+                      key={p.id}
+                      className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] text-emerald-700"
+                    >
+                      {p.nombre_proceso}
+                    </span>
+                  )) || <span className="text-gray-400">—</span>}
+                </div>
+              </td>
 
               {/* Evidencias */}
-              <div className={`ui-td p-0 ${CELL} text-center`}>
-                <div className="inline-flex items-center gap-2">
-                  <span className="inline-flex min-w-6 justify-center rounded-full bg-gray-100 px-5 py-0.5 text-[11px] text-gray-700 ring-1 ring-gray-200">
-                    {a.evidencias?.length ?? 0}
-                  </span>
-                  {!!a.evidencias?.length && (
-                    <button
-                      className="ui-btn-ghost rounded-md p-1.5 hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-300"
-                      title="Ver evidencias"
-                      onClick={() => onOpenList(a)}
-                    >
-                      👁️
-                    </button>
-                  )}
-                </div>
-              </div>
+              <td className="px-4 py-3 text-center">
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-xs text-gray-700">
+                  {a.evidencias?.length ?? 0}
+                </span>
+              </td>
 
               {/* Estado */}
-              <div className={`ui-td p-10 py-5 ${CELL} text-right`}>
+              <td className="px-4 py-3 text-center">
                 <span
-                  className={`ui-badge ${estadoClass(
-                    a.estado
-                  )} ring-1 ring-black/5`}
+                  className={`rounded-full px-3 py-0.5 text-xs font-medium ${
+                    a.estado === "programada"
+                      ? "bg-emerald-50 text-emerald-700"
+                      : a.estado === "en_proceso"
+                      ? "bg-yellow-50 text-yellow-700"
+                      : a.estado === "finalizada"
+                      ? "bg-gray-100 text-gray-600"
+                      : "bg-rose-50 text-rose-700"
+                  }`}
                 >
                   {a.estado}
                 </span>
-              </div>
+              </td>
 
               {/* Acciones */}
-              <div className={`ui-td p-0 ${CELL}`}>
-                <div className="ml-auto flex w-full items-center justify-end">
+              <td className="px-4 py-3 text-right">
+                <div className="flex justify-end gap-2 text-gray-500 text-sm">
                   <button
-                    className="ui-btn-ghost rounded-md p-2 hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-300"
                     onClick={() => onEdit(a)}
                     title="Editar"
+                    className="hover:text-verdeOscuro"
                   >
                     ✏️
                   </button>
                   <button
-                    className="ui-btn-ghost rounded-md p-2 text-rose-700 hover:bg-rose-50 focus:outline-none focus:ring-2 focus:ring-rose-300"
                     onClick={() => onDelete(a)}
                     title="Eliminar"
+                    className="hover:text-rose-600"
                   >
                     🗑️
                   </button>
                   <button
-                    className="ui-btn-ghost rounded-md p-2 hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-300"
                     onClick={() => onOpenUpload(a)}
                     title="Subir evidencias"
+                    className="hover:text-verdeOscuro"
                   >
                     📂
                   </button>
                 </div>
-              </div>
-            </div>
+              </td>
+            </tr>
           ))}
-        </div>
-      )}
+        </tbody>
+      </table>
     </div>
   );
 }
 
-function estadoClass(estado: EstadoActividad) {
-  switch (estado) {
-    case "programada":
-      return "ui-badge-success";
-    case "en_proceso":
-      return "ui-badge-warning";
-    case "finalizada":
-      return "ui-badge-neutral";
-    case "cancelada":
-      return "ui-badge-danger";
-    default:
-      return "ui-badge-neutral";
-  }
-}
 function fmtDateTime(iso: string) {
   const d = new Date(iso);
   return `${d.toLocaleDateString()} ${d.toLocaleTimeString([], {

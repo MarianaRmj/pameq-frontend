@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "@/app/lib/api";
 import {
   Process,
@@ -28,7 +28,6 @@ function toInputDT(iso?: string) {
 }
 
 export function ActivityForm({
-  procesos,
   onClose,
   onSaved,
   mode = "create",
@@ -45,7 +44,7 @@ export function ActivityForm({
     sedeId: undefined as number | undefined,
     cicloId: undefined as number | undefined,
     responsableId: 1,
-    procesosIds: [] as number[],
+    procesosIds: [] as number[], // 👈 procesos múltiples
   });
 
   const [formOptions, setFormOptions] = useState<{
@@ -58,7 +57,6 @@ export function ActivityForm({
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [searchProc, setSearchProc] = useState("");
   const { user } = useAuth();
   const userId = user?.id;
 
@@ -75,14 +73,14 @@ export function ActivityForm({
       institutionId: initial.institutionId,
       sedeId: initial.sedeId,
       cicloId: initial.cicloId,
-      responsableId: initial.responsableId,
-      procesosIds: initial.procesos_invitados?.map((p) => p.id) ?? [],
+      responsableId: initial.responsable?.id ?? 1, // 👈 solo el ID
+      procesosIds: initial.procesos?.map((p) => p.id) ?? [],
     });
   }, [initial]);
 
   // Fetch form options cuando se crea
+  // Fetch form options en create y edit
   useEffect(() => {
-    if (mode !== "create") return;
     if (!userId) {
       console.warn("⚠️ userId no definido:", user);
       return;
@@ -103,12 +101,15 @@ export function ActivityForm({
         const data = await res.json();
         setFormOptions(data);
 
-        setForm((prev) => ({
-          ...prev,
-          institutionId: data.institution.id,
-          cicloId: data.ciclo?.id,
-          responsableId: data.responsables[0]?.id ?? 1,
-        }));
+        // Solo autocompletar valores por defecto en "create"
+        if (mode === "create") {
+          setForm((prev) => ({
+            ...prev,
+            institutionId: data.institution.id,
+            cicloId: data.ciclo?.id,
+            responsableId: data.responsables[0]?.id ?? 1,
+          }));
+        }
       } catch (err) {
         console.error("❌ Error cargando opciones del formulario:", err);
       }
@@ -117,26 +118,14 @@ export function ActivityForm({
     fetchFormOptions();
   }, [mode, userId, user]);
 
-  const filteredProcesos = useMemo(() => {
-    const q = searchProc.trim().toLowerCase();
-    if (!q) return procesos;
-    return procesos.filter((p) => p.nombre.toLowerCase().includes(q));
-  }, [procesos, searchProc]);
-
-  const toggleProceso = (id: number) => {
-    setForm((f) =>
-      f.procesosIds.includes(id)
-        ? { ...f, procesosIds: f.procesosIds.filter((x) => x !== id) }
-        : { ...f, procesosIds: [...f.procesosIds, id] }
-    );
-  };
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
     setError(null);
     try {
       const payload = { ...form };
+      // Optionally, if your backend expects "procesos" instead of "procesosIds", map accordingly:
+      // payload.procesos = form.procesosIds;
       if (mode === "edit" && initial) {
         await api(`/activities/${initial.id}`, {
           method: "PATCH",
@@ -321,45 +310,32 @@ export function ActivityForm({
                 </select>
               </Field>
 
-              <div className="col-span-12 md:col-span-6">
-                <label className="ui-label">Procesos invitados</label>
-                <div className="ui-input flex flex-col gap-2">
-                  <input
-                    className="h-9 w-full rounded-lg border border-transparent bg-white px-2 text-sm outline-none placeholder:text-gray-400"
-                    placeholder="Buscar proceso…"
-                    value={searchProc}
-                    onChange={(e) => setSearchProc(e.target.value)}
-                  />
-
-                  <div className="max-h-36 overflow-y-auto rounded-md border border-gray-200/80 bg-white/70 backdrop-blur-sm divide-y divide-gray-100">
-                    {filteredProcesos.length === 0 ? (
-                      <div className="px-3 py-2 text-sm text-gray-500">
-                        Sin resultados
-                      </div>
-                    ) : (
-                      filteredProcesos.map((p) => {
-                        const checked = form.procesosIds.includes(p.id);
-                        return (
-                          <label
-                            key={p.id}
-                            className={`flex cursor-pointer items-center gap-2 px-3 py-2 text-sm transition ${
-                              checked ? "bg-[#eaf8f2]" : "hover:bg-gray-50"
-                            }`}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={checked}
-                              onChange={() => toggleProceso(p.id)}
-                              className="accent-[#2C5959]"
-                            />
-                            <span className="truncate">{p.nombre}</span>
-                          </label>
-                        );
-                      })
-                    )}
-                  </div>
+              <Field
+                className="col-span-12 md:col-span-6"
+                label="Procesos"
+                required
+              >
+                <div className="space-y-2">
+                  {formOptions?.procesos?.map((p) => (
+                    <label key={p.id} className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 rounded border-gray-300 text-[#2C5959] focus:ring-[#2C5959]"
+                        checked={form.procesosIds.includes(p.id)}
+                        onChange={(e) => {
+                          setForm((prev) => ({
+                            ...prev,
+                            procesosIds: e.target.checked
+                              ? [...prev.procesosIds, p.id]
+                              : prev.procesosIds.filter((id) => id !== p.id),
+                          }));
+                        }}
+                      />
+                      <span className="text-sm">{p.nombre_proceso}</span>
+                    </label>
+                  ))}
                 </div>
-              </div>
+              </Field>
             </div>
           </Section>
 

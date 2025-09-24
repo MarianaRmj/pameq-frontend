@@ -5,7 +5,7 @@ import OportunidadesList from "./OportunidadesList";
 import { useState } from "react";
 import { api } from "@/app/lib/api";
 import { toast } from "sonner";
-import { PlusCircle, Trash2, Save, XCircle, Edit2 } from "lucide-react";
+import { PlusCircle, Save, XCircle } from "lucide-react";
 
 type Tipo =
   | "fortalezas"
@@ -196,21 +196,22 @@ export default function QualitativeList({
                 {!confirmado && (
                   <div className="flex flex-col gap-2">
                     <button
-                      title="Editar"
                       onClick={() => {
                         setEditIndex(index);
                         setEditValue(item);
                       }}
-                      className="p-2 rounded-full bg-verdeSuave hover:bg-verdeClaro/40 text-verdeOscuro transition"
+                      title="Editar"
+                      className="hover:text-verdeOscuro"
                     >
-                      <Edit2 className="w-4 h-4" />
+                      ✏️
                     </button>
+
                     <button
-                      title="Eliminar"
                       onClick={() => eliminar(index)}
-                      className="p-2 rounded-full bg-red-50 hover:bg-red-100 text-red-600 transition"
+                      title="Eliminar"
+                      className="hover:text-rose-600"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      🗑️
                     </button>
                   </div>
                 )}

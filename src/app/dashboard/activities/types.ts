@@ -7,8 +7,10 @@ export type EstadoActividad =
 
 export interface Process {
   id: number;
-  nombre: string;
-  activo: boolean;
+  nombre_proceso: string;
+  descripcion?: string;
+  lider?: string;
+  numero_integrantes?: number;
 }
 
 export interface Evidence {
@@ -32,8 +34,8 @@ export interface Activity {
   institutionId: number;
   sedeId?: number;
   cicloId?: number;
-  responsableId: number;
-  procesos_invitados: Process[];
+  responsable?: { id: number; nombre: string; email?: string }; // 👈
+  procesos: Process[];
   evidencias: Evidence[];
   created_at: string;
   updated_at: string;
