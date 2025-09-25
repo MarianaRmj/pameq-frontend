@@ -44,7 +44,7 @@ export function ActivityForm({
     sedeId: undefined as number | undefined,
     cicloId: undefined as number | undefined,
     responsableId: 1,
-    procesosIds: [] as number[], // 👈 procesos múltiples
+    procesosIds: [] as number[],
   });
 
   const [formOptions, setFormOptions] = useState<{
@@ -73,13 +73,12 @@ export function ActivityForm({
       institutionId: initial.institutionId,
       sedeId: initial.sedeId,
       cicloId: initial.cicloId,
-      responsableId: initial.responsable?.id ?? 1, // 👈 solo el ID
+      responsableId: initial.responsable?.id ?? 1,
       procesosIds: initial.procesos?.map((p) => p.id) ?? [],
     });
   }, [initial]);
 
-  // Fetch form options cuando se crea
-  // Fetch form options en create y edit
+  // Fetch form options en create y edit (sin cambiar lógica)
   useEffect(() => {
     if (!userId) {
       console.warn("⚠️ userId no definido:", user);
@@ -92,16 +91,13 @@ export function ActivityForm({
             userId
           )}`
         );
-
         if (!res.ok) {
           const text = await res.text();
           throw new Error(`Error ${res.status}: ${text}`);
         }
-
         const data = await res.json();
         setFormOptions(data);
 
-        // Solo autocompletar valores por defecto en "create"
         if (mode === "create") {
           setForm((prev) => ({
             ...prev,
@@ -124,8 +120,6 @@ export function ActivityForm({
     setError(null);
     try {
       const payload = { ...form };
-      // Optionally, if your backend expects "procesos" instead of "procesosIds", map accordingly:
-      // payload.procesos = form.procesosIds;
       if (mode === "edit" && initial) {
         await api(`/activities/${initial.id}`, {
           method: "PATCH",
@@ -146,26 +140,36 @@ export function ActivityForm({
     }
   }
 
+  // ---- UI solo visual ----
+  const selectedCount = form.procesosIds.length;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="relative w-full max-w-4xl overflow-hidden rounded-2xl bg-gradient-to-br from-white to-gray-50 shadow-2xl ring-1 ring-gray-200 font-nunito">
-        <div className="flex items-center justify-between border-b border-gray-200/70 px-6 py-4">
-          <h2 className="text-lg font-nunito text-[#2A5559] tracking-tight">
-            {mode === "edit" ? "Editar actividad" : "Nueva actividad"}
-          </h2>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+      <div className="relative w-full max-w-4xl overflow-hidden rounded-2xl bg-white shadow-xl ring-1 ring-gray-200">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4 bg-white/70">
+          <div className="flex items-center gap-3">
+            <h2 className="text-lg font-semibold text-[#2A5559]">
+              {mode === "edit" ? "Editar actividad" : "Nueva actividad"}
+            </h2>
+            <span className="rounded-full border border-gray-200 bg-gray-50 px-2.5 py-0.5 text-xs text-gray-600">
+              {mode === "edit" ? "Edición" : "Creación"}
+            </span>
+          </div>
           <button
             onClick={onClose}
-            className="rounded-xl px-2 py-1 text-sm text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition"
+            className="rounded-lg px-2 py-1 text-sm text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition"
             aria-label="Cerrar"
           >
             ✕
           </button>
         </div>
 
+        {/* Form */}
         <form
           id="activityForm"
           onSubmit={handleSubmit}
-          className="max-h-[72vh] overflow-y-auto px-6 py-5 space-y-5"
+          className="max-h-[72vh] overflow-y-auto px-6 py-5 space-y-6"
         >
           <Section title="Básicos">
             <div className="grid grid-cols-12 gap-4">
@@ -175,7 +179,7 @@ export function ActivityForm({
                 required
               >
                 <input
-                  className="ui-input"
+                  className="ui-input focus:ring-2 focus:ring-[#33A691] focus:border-[#33A691]"
                   value={form.nombre_actividad}
                   onChange={(e) =>
                     setForm({ ...form, nombre_actividad: e.target.value })
@@ -187,7 +191,7 @@ export function ActivityForm({
 
               <Field className="col-span-12" label="Descripción">
                 <textarea
-                  className="ui-input min-h-[96px] resize-y"
+                  className="ui-input min-h-[96px] resize-y focus:ring-2 focus:ring-[#33A691] focus:border-[#33A691]"
                   rows={4}
                   value={form.descripcion}
                   onChange={(e) =>
@@ -208,13 +212,16 @@ export function ActivityForm({
               >
                 <input
                   type="datetime-local"
-                  className="ui-input"
+                  className="ui-input focus:ring-2 focus:ring-[#33A691] focus:border-[#33A691]"
                   value={form.fecha_inicio}
                   onChange={(e) =>
                     setForm({ ...form, fecha_inicio: e.target.value })
                   }
                   required
                 />
+                <p className="mt-1 text-xs text-gray-500">
+                  Usa formato local (día/mes/año hh:mm).
+                </p>
               </Field>
 
               <Field
@@ -224,7 +231,7 @@ export function ActivityForm({
               >
                 <input
                   type="datetime-local"
-                  className="ui-input"
+                  className="ui-input focus:ring-2 focus:ring-[#33A691] focus:border-[#33A691]"
                   value={form.fecha_fin}
                   onChange={(e) =>
                     setForm({ ...form, fecha_fin: e.target.value })
@@ -235,7 +242,7 @@ export function ActivityForm({
 
               <Field className="col-span-12 md:col-span-6" label="Lugar">
                 <input
-                  className="ui-input"
+                  className="ui-input focus:ring-2 focus:ring-[#33A691] focus:border-[#33A691]"
                   value={form.lugar ?? ""}
                   onChange={(e) => setForm({ ...form, lugar: e.target.value })}
                   placeholder="Auditorio principal / Sala 2 / Virtual"
@@ -248,7 +255,7 @@ export function ActivityForm({
             <div className="grid grid-cols-12 gap-4">
               <Field className="col-span-12 md:col-span-4" label="Institución">
                 <input
-                  className="ui-input"
+                  className="ui-input bg-gray-50 text-gray-600"
                   value={formOptions?.institution?.nombre ?? ""}
                   disabled
                 />
@@ -256,7 +263,7 @@ export function ActivityForm({
 
               <Field className="col-span-12 md:col-span-4" label="Sede">
                 <select
-                  className="ui-input"
+                  className="ui-input focus:ring-2 focus:ring-[#33A691] focus:border-[#33A691]"
                   value={form.sedeId ?? ""}
                   onChange={(e) =>
                     setForm({
@@ -278,7 +285,7 @@ export function ActivityForm({
 
               <Field className="col-span-12 md:col-span-4" label="Ciclo">
                 <input
-                  className="ui-input"
+                  className="ui-input bg-gray-50 text-gray-600"
                   value={form.cicloId ?? ""}
                   disabled
                 />
@@ -299,7 +306,7 @@ export function ActivityForm({
                   onChange={(e) =>
                     setForm({ ...form, responsableId: Number(e.target.value) })
                   }
-                  className="ui-input"
+                  className="ui-input focus:ring-2 focus:ring-[#33A691] focus:border-[#33A691]"
                 >
                   <option value="">Seleccione un responsable</option>
                   {formOptions?.responsables?.map((usuario) => (
@@ -315,25 +322,40 @@ export function ActivityForm({
                 label="Procesos"
                 required
               >
-                <div className="space-y-2">
-                  {formOptions?.procesos?.map((p) => (
-                    <label key={p.id} className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        className="h-4 w-4 rounded border-gray-300 text-[#2C5959] focus:ring-[#2C5959]"
-                        checked={form.procesosIds.includes(p.id)}
-                        onChange={(e) => {
-                          setForm((prev) => ({
-                            ...prev,
-                            procesosIds: e.target.checked
-                              ? [...prev.procesosIds, p.id]
-                              : prev.procesosIds.filter((id) => id !== p.id),
-                          }));
-                        }}
-                      />
-                      <span className="text-sm">{p.nombre_proceso}</span>
-                    </label>
-                  ))}
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs text-gray-500">
+                    Selecciona uno o varios procesos
+                  </span>
+                  <span className="rounded-full border border-gray-200 bg-gray-50 px-2.5 py-0.5 text-[11px] text-gray-700">
+                    {selectedCount} seleccionados
+                  </span>
+                </div>
+                <div className="max-h-40 overflow-auto rounded-lg border border-gray-200 p-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                    {formOptions?.procesos?.map((p) => (
+                      <label
+                        key={p.id}
+                        className="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-gray-50"
+                      >
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 rounded border-gray-300 text-[#2C5959] focus:ring-[#2C5959]"
+                          checked={form.procesosIds.includes(p.id)}
+                          onChange={(e) => {
+                            setForm((prev) => ({
+                              ...prev,
+                              procesosIds: e.target.checked
+                                ? [...prev.procesosIds, p.id]
+                                : prev.procesosIds.filter((id) => id !== p.id),
+                            }));
+                          }}
+                        />
+                        <span className="text-sm text-gray-800 truncate">
+                          {p.nombre_proceso}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
               </Field>
             </div>
@@ -343,7 +365,7 @@ export function ActivityForm({
             <div className="grid grid-cols-12 gap-4">
               <Field className="col-span-12 md:col-span-4" label="Estado">
                 <select
-                  className="ui-input"
+                  className="ui-input focus:ring-2 focus:ring-[#33A691] focus:border-[#33A691]"
                   value={form.estado}
                   onChange={(e) =>
                     setForm({
@@ -368,7 +390,8 @@ export function ActivityForm({
           )}
         </form>
 
-        <div className="flex items-center justify-end gap-2 border-t border-gray-200/70 bg-white/70 px-6 py-4">
+        {/* Footer sticky */}
+        <div className="sticky bottom-0 flex items-center justify-end gap-2 border-t border-gray-200 bg-white/90 px-6 py-4 backdrop-blur">
           <button
             type="button"
             onClick={onClose}
@@ -404,8 +427,8 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <fieldset className="rounded-xl border border-gray-200/70 bg-white/60 p-4 shadow-sm">
-      <legend className="px-2 text-xs font-nunito uppercase tracking-wide text-[#2A5559]">
+    <fieldset className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+      <legend className="px-2 text-xs font-semibold uppercase tracking-wide text-[#2A5559]">
         {title}
       </legend>
       {children}

@@ -47,7 +47,7 @@ export function EvidenceListModal({
       {
         method: "DELETE",
         credentials: "include",
-        body: new FormData()
+        body: new FormData(), // <— se mantiene igual
       }
     );
     if (!r.ok) return alert("No se pudo eliminar");
@@ -55,17 +55,27 @@ export function EvidenceListModal({
     await onChanged?.();
   }
 
+  // 👉 Solo-UI: skeleton rows (no afecta lógica)
+  const skeleton = Array.from({ length: 6 });
+
   return (
-    <div className="fixed inset-0 z-[65] grid place-items-center  bg-black/40 backdrop-blur-sm p-4 sm:p-6">
-      <div className="ui-card w-full max-w-4xl rounded-2xl border border-gray-200 bg-white-700 shadow-xl">
+    <div className="fixed inset-0 z-[65] grid place-items-center bg-black/40 backdrop-blur-sm p-4 sm:p-6">
+      <div className="w-full max-w-4xl overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl">
         {/* Header */}
-        <div className="flex items-center justify-between  gap-4 border-b px-5 py-3">
-          <h3 className="text-lg font-nunito text-[#000000]">
-            Evidencias — Actividad #{activityId}
-          </h3>
+        <div className="flex items-center justify-between gap-4 border-b px-5 py-3 bg-white/80 backdrop-blur">
+          <div className="flex items-center gap-3">
+            <h3 className="text-lg font-nunito text-[#2A5559]">
+              Evidencias — Actividad #{activityId}
+            </h3>
+            {!loading && (
+              <span className="rounded-full border border-gray-200 bg-gray-50 px-2.5 py-0.5 text-[11px] text-gray-700">
+                {rows.length} archivo{rows.length === 1 ? "" : "s"}
+              </span>
+            )}
+          </div>
           <button
             onClick={onClose}
-            className="ui-btn-ghost rounded-full p-2 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-red-700"
+            className="rounded-full p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-red-600"
             aria-label="Cerrar"
             title="Cerrar"
           >
@@ -74,32 +84,62 @@ export function EvidenceListModal({
         </div>
 
         {/* Body */}
-        <div className="px-5 py-4 ">
+        <div className="px-5 py-4">
           {loading ? (
-            <div className="text-sm text-gray-500">Cargando…</div>
+            // Skeleton loader minimalista (solo visual)
+            <div className="max-h-[60vh] overflow-hidden rounded-xl border border-gray-200">
+              <div className="sticky top-0 z-10 bg-gray-100/80 px-4 py-3">
+                <div className="h-3 w-1/3 animate-pulse rounded bg-gray-200" />
+              </div>
+              <ul className="divide-y divide-gray-100">
+                {skeleton.map((_, i) => (
+                  <li key={i} className="grid grid-cols-12 gap-4 px-4 py-3">
+                    <div className="col-span-6 space-y-2">
+                      <div className="h-4 w-3/4 animate-pulse rounded bg-gray-200" />
+                      <div className="h-3 w-1/2 animate-pulse rounded bg-gray-100" />
+                    </div>
+                    <div className="col-span-2">
+                      <div className="h-5 w-20 animate-pulse rounded-full bg-gray-100" />
+                    </div>
+                    <div className="col-span-2">
+                      <div className="h-4 w-16 animate-pulse rounded bg-gray-100" />
+                    </div>
+                    <div className="col-span-2 flex justify-end">
+                      <div className="h-8 w-20 animate-pulse rounded bg-gray-100" />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
           ) : err ? (
             <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
               {err}
             </div>
           ) : rows.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-gray-200 px-6 py-10 text-center text-sm text-gray-500">
-              Sin evidencias.
+            <div className="rounded-xl border border-dashed border-gray-200 px-6 py-10 text-center">
+              <div className="mb-2 text-2xl">📄</div>
+              <p className="text-sm text-gray-600">
+                Sin evidencias para esta actividad.
+              </p>
+              <p className="mt-1 text-xs text-gray-400">
+                Usa 📂 en la tabla principal para cargar archivos.
+              </p>
             </div>
           ) : (
-            <div className="max-h-[60vh] overflow-auto rounded-xl border  border-gray-200">
+            <div className="max-h-[60vh] overflow-auto rounded-xl border border-gray-200">
               <table className="w-full min-w-[720px] text-sm">
-                <thead className="sticky top-0 z-5 bg-verdeOscuro text-[11px] uppercase tracking-wide text-white text-center">
+                <thead className="sticky top-0 z-10 bg-verdeOscuro text-[11px] uppercase tracking-wide text-white">
                   <tr>
                     <th className="px-4 py-3 text-left font-nunito">Archivo</th>
-                    <th className="px-6 py-3 text-left font-nunito">Tipo</th>
+                    <th className="px-4 py-3 text-left font-nunito">Tipo</th>
                     <th className="px-4 py-3 text-left font-nunito">Tamaño</th>
-                    <th className="px-9 py-2 text-left font-nunito">Fecha</th>
-                    <th className="px-6 py-2 text-right font-nunito">
+                    <th className="px-4 py-3 text-left font-nunito">Fecha</th>
+                    <th className="px-4 py-3 text-right font-nunito">
                       Acciones
                     </th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="align-middle">
                   {rows.map((ev) => (
                     <tr
                       key={ev.id}
@@ -117,14 +157,14 @@ export function EvidenceListModal({
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] text-gray-700 ring-1 ring-gray-200">
+                        <span className="inline-flex items-center rounded-full border border-gray-200 bg-gray-100 px-2 py-0.5 text-[11px] text-gray-700">
                           {ev.mimeType}
                         </span>
                       </td>
-                      <td className="px-4 py-3 tabular-nums">
+                      <td className="px-4 py-3 tabular-nums text-gray-800">
                         {prettyBytes(ev.size)}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 text-gray-800">
                         {formatDate(ev.uploaded_at)}
                       </td>
                       <td className="px-4 py-3">
@@ -133,14 +173,14 @@ export function EvidenceListModal({
                             href={ev.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="ui-btn-ghost rounded-md px-2 py-1 hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-emerald-300"
-                            title="Ver evidencias"
+                            className="rounded-md px-2 py-1 text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                            title="Ver evidencia"
                           >
                             👁️
                           </a>
                           <button
                             onClick={() => handleDelete(ev)}
-                            className="ui-btn-ghost rounded-md px-2 py-1 text-rose-700 hover:bg-rose-50 focus:outline-none focus:ring-2 focus:ring-rose-300"
+                            className="rounded-md px-2 py-1 text-rose-700 hover:bg-rose-50 focus:outline-none focus:ring-2 focus:ring-rose-300"
                             title="Eliminar evidencia"
                           >
                             🗑️
