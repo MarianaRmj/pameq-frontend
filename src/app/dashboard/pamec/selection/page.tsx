@@ -4,19 +4,19 @@ import { useEffect, useState } from "react";
 import { api } from "@/app/lib/api";
 import { toast } from "sonner";
 import { useConfirm } from "@/hooks/useConfirm";
-
 import {
   RecuentoProceso,
   SeleccionGuardada,
   EstandarConOportunidad,
 } from "./type";
-
 import ProcessesTable from "./ProcessesTable";
 import StandardsTable from "./StandardsTable";
 
 export default function SelectionPage() {
   const { confirm, ConfirmModal } = useConfirm();
-  const cicloId = 2025;
+
+  const [cicloId, setCicloId] = useState<number | null>(null); // ID (ej. 1)
+  const [cicloYear, setCicloYear] = useState<number | null>(null); // AÑO (ej. 2025)
 
   const [procesos, setProcesos] = useState<RecuentoProceso[]>([]);
   const [estandares, setEstandares] = useState<EstandarConOportunidad[]>([]);
@@ -27,26 +27,49 @@ export default function SelectionPage() {
   >({});
   const [guardados, setGuardados] = useState<Record<number, boolean>>({});
 
-  // 📌 Cargar datos iniciales
+  // 1) Traer ciclo ACTIVO (id + fecha_inicio para sacar el año)
   useEffect(() => {
-    const fetchData = async () => {
+    let mounted = true;
+    (async () => {
+      try {
+        const activo = await api<{ id: number; fecha_inicio: string }>(
+          "/cycles/active"
+        );
+        if (!mounted) return;
+        setCicloId(activo.id);
+        setCicloYear(Number(activo.fecha_inicio.slice(0, 4)));
+      } catch (err) {
+        console.error("❌ Error obteniendo ciclo activo:", err);
+        toast.error("No se pudo obtener el ciclo activo");
+        setLoading(false);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // 2) Con cicloId (ID) y cicloYear (AÑO) listos, cargar datos
+  useEffect(() => {
+    if (cicloId == null || cicloYear == null) return;
+    let mounted = true;
+
+    (async () => {
       try {
         setLoading(true);
 
-        // Procesos con recuento de oportunidades
-        const recuento = await api<RecuentoProceso[]>(
-          `/processes/recuento/${cicloId}`
-        );
+        // ID → recuento y seleccionados
+        const [recuento, seleccionados] = await Promise.all([
+          api<RecuentoProceso[]>(`/processes/recuento/${cicloId}`),
+          api<SeleccionGuardada[]>(`/processes/seleccionados/${cicloId}`),
+        ]);
 
-        // Procesos ya seleccionados en BD
-        const seleccionados = await api<SeleccionGuardada[]>(
-          `/processes/seleccionados/${cicloId}`
-        );
-
-        // Estándares con oportunidades de mejora
+        // AÑO → estándares con oportunidades
         const estandaresResp = await api<EstandarConOportunidad[]>(
-          `/autoevaluaciones/${cicloId}/oportunidades`
+          `/autoevaluaciones/${cicloYear}/oportunidades`
         );
+
+        if (!mounted) return;
 
         // Inicializar estado local
         const initSelecciones: Record<
@@ -58,8 +81,8 @@ export default function SelectionPage() {
         recuento.forEach((r) => {
           const saved = seleccionados.find((s) => s.proceso.id === r.id);
           initSelecciones[r.id] = {
-            seleccion: saved ? saved.seleccionado : false,
-            observaciones: saved ? saved.observaciones : "",
+            seleccion: !!saved?.seleccionado,
+            observaciones: saved?.observaciones || "",
           };
           if (saved) initGuardados[r.id] = true;
         });
@@ -72,14 +95,15 @@ export default function SelectionPage() {
         console.error("❌ Error cargando datos:", err);
         toast.error("Error cargando datos de selección de procesos");
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
+    })();
+
+    return () => {
+      mounted = false;
     };
+  }, [cicloId, cicloYear]);
 
-    fetchData();
-  }, [cicloId]);
-
-  // 📌 Cambios en selección / observaciones
   const handleChange = (
     procesoId: number,
     field: "seleccion" | "observaciones",
@@ -87,14 +111,20 @@ export default function SelectionPage() {
   ) => {
     setSelecciones((prev) => ({
       ...prev,
-      [procesoId]: { ...prev[procesoId], [field]: value },
+      [procesoId]: {
+        ...(prev[procesoId] ?? { seleccion: false, observaciones: "" }),
+        [field]: field === "seleccion" ? Boolean(value) : String(value),
+      },
     }));
     setGuardados((prev) => ({ ...prev, [procesoId]: false }));
   };
 
-  // 📌 Guardar selección en BD
+  // El backend usa el ciclo ACTIVO global; no mandamos cicloId
   const handleSave = (row: RecuentoProceso) => {
-    const { seleccion, observaciones } = selecciones[row.id] || {};
+    const { seleccion, observaciones } = selecciones[row.id] || {
+      seleccion: false,
+      observaciones: "",
+    };
     if (seleccion && !observaciones.trim()) {
       toast.error("Debes ingresar observaciones si marcas selección.");
       return;
@@ -103,32 +133,32 @@ export default function SelectionPage() {
     confirm(
       `¿Confirmas guardar la selección para el proceso "${row.proceso}"?`,
       async () => {
-        const payload = {
-          procesoId: row.id,
-          usuarioId: 5, // TODO: traer de sesión real
-          seleccion,
-          observaciones,
-        };
-
         try {
           await api("/processes/seleccion", {
             method: "POST",
-            body: JSON.stringify(payload),
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              procesoId: row.id,
+              usuarioId: 5, // TODO: sesión real
+              seleccionado: !!seleccion,
+              observaciones: observaciones ?? "",
+            }),
           });
           toast.success(`Selección guardada para ${row.proceso}`);
           setGuardados((prev) => ({ ...prev, [row.id]: true }));
-        } catch {
+        } catch (e) {
+          console.error(e);
           toast.error("Error al guardar selección");
         }
       }
     );
   };
 
-  if (loading) return <p className="p-4">Cargando...</p>;
+  if (loading || cicloId == null || cicloYear == null)
+    return <p className="p-4">Cargando...</p>;
 
   return (
     <div className="p-6 space-y-10">
-      {/* 📌 Tabla de Procesos */}
       <ProcessesTable
         data={procesos}
         selecciones={selecciones}
@@ -136,11 +166,7 @@ export default function SelectionPage() {
         onChange={handleChange}
         onSave={handleSave}
       />
-
-      {/* 📌 Tabla de Estándares con Oportunidades */}
       <StandardsTable estandares={estandares} selecciones={selecciones} />
-
-      {/* 📌 Modal de confirmación */}
       <ConfirmModal />
     </div>
   );

@@ -144,7 +144,7 @@ export default function Sidebar() {
               },
               {
                 label: "Matriz Priorización",
-                href: "/dashboard/pamec/matrix",
+                href: "/dashboard/pamec/matriz",
                 icon: <FiGrid />,
               },
               {
